@@ -474,8 +474,16 @@ menu_key(Evas_Event_Key_Down *ev)
 {
 	if (!strcmp(ev->keyname, "Up")) menu_item_select_jump(-1);
 	else if (!strcmp(ev->keyname, "Down")) menu_item_select_jump(1);
-	else if (!strcmp(ev->keyname, "Prior")) menu_item_select_jump(-10);
-	else if (!strcmp(ev->keyname, "Next"))  menu_item_select_jump(10);
+	else if (!strcmp(ev->keyname, "Prior")) 
+		{
+			printf("prior!\n");
+			menu_item_select_jump(-10);
+		}
+	else if (!strcmp(ev->keyname, "Next"))
+		{
+			printf("next!\n");
+			menu_item_select_jump(10);
+		}
 	else if (!strcmp(ev->keyname, "Right"))  menu_item_select_go();
 	else if (!strcmp(ev->keyname, "Left"))
 		{

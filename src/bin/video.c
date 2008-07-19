@@ -6,6 +6,7 @@ static double jump = 0.0;
 static Ecore_Timer *jump_reset_timer = NULL;
 static Ecore_Job *video_stopped_job = NULL;
 static Ecore_Timer *_hide_timer = NULL;
+static int zoom_mode = 0;
 
 static int video_menu_bg_hide_tmer_cb(void *data);
 static void video_resize(void);
@@ -281,6 +282,10 @@ video_key(Evas_Event_Key_Down *ev)
 		{
 			/* FIXME: play info display toggle */
 		}
+	else if (!strcmp(ev->keyname, "z"))
+		{
+			zoom_mode = !zoom_mode;
+		}
 }
 
 
@@ -309,10 +314,19 @@ video_resize(void)
 	else ratio = (double)iw / (double)ih;
 	w = 10240 * ratio;
 	h = 10240;
-	// fit so there is no blank space
-	//   edje_extern_object_aspect_set(o_video, EDJE_ASPECT_CONTROL_NEITHER, w, h);
-	// fit and pad with blank
-	edje_extern_object_aspect_set(o_video, EDJE_ASPECT_CONTROL_BOTH, w, h);
+	
+	if (zoom_mode)
+		{
+			// fit so there is no blank space
+			edje_extern_object_aspect_set(o_video, 
+																		EDJE_ASPECT_CONTROL_NEITHER, w, h);
+		}
+	else
+		{
+			// fit and pad with blank
+			edje_extern_object_aspect_set(o_video, EDJE_ASPECT_CONTROL_BOTH, w, h);
+		}
+	
 	edje_object_part_swallow(o_video_bg, "video", o_video);
 }
 
