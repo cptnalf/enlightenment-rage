@@ -6,7 +6,6 @@ static double jump = 0.0;
 static Ecore_Timer *jump_reset_timer = NULL;
 static Ecore_Job *video_stopped_job = NULL;
 static Ecore_Timer *_hide_timer = NULL;
-static int zoom_mode = 0;
 
 static int video_menu_bg_hide_tmer_cb(void *data);
 static void video_resize(void);
@@ -57,15 +56,15 @@ video_init(char *module, char *file, char *swallow)
 	emotion_object_audio_mute_set(o_video, 0);
 	emotion_object_audio_volume_set(o_video, 1.0);
 	layout_swallow(swallow, o_video_bg);
-
+	
 	edje_extern_object_aspect_set(o_video, EDJE_ASPECT_CONTROL_BOTH, 640, 480);
 	edje_object_part_swallow(o_video_bg, "video", o_video);
-
+	
 	video_resize();
-   
+	
 	evas_object_show(o_video);
 	evas_object_show(o_video_bg);
-
+	
 	_hide_timer = ecore_timer_add(10.0, video_menu_bg_hide_tmer_cb, NULL);
    
 	/* FIXME: add this video to recently played list */
@@ -282,10 +281,6 @@ video_key(Evas_Event_Key_Down *ev)
 		{
 			/* FIXME: play info display toggle */
 		}
-	else if (!strcmp(ev->keyname, "z"))
-		{
-			zoom_mode = !zoom_mode;
-		}
 }
 
 
@@ -297,6 +292,13 @@ video_menu_bg_hide_tmer_cb(void *data)
 	menu_hide();
 	mini_pause_set(1);
 	_hide_timer = NULL;
+	
+	{
+		Evas_Coord x,y,h,w;
+		evas_object_geometry_get(o_video, &x, &y, &w, &h);
+		fprintf(stderr, "(%d,%d) %dx%d\n", x, y, w, h);
+	}
+	
 	return 0;
 }
 
@@ -304,6 +306,7 @@ static void
 video_resize(void)
 {
 	Evas_Coord w, h;
+	Evas_Coord rw, rh;
 	int iw, ih;
 	double ratio;
 
@@ -315,11 +318,24 @@ video_resize(void)
 	w = 10240 * ratio;
 	h = 10240;
 	
+	evas_output_viewport_get(evas, 0, 0, &rw, &rh);
+	
+	/* this provides for the lost area on my mitsubishi dlp. */
+	static int x_offset = 50; //65;
+	static int y_offset = 15; //20;
+	
+	rw -= (x_offset * 2);
+	rh -= (y_offset * 2);
+	edje_extern_object_max_size_set(o_video, rw, rh);
+	
 	if (zoom_mode)
 		{
+			Edje_Aspect_Control asp_ctrl = EDJE_ASPECT_CONTROL_VERTICAL;
+			
+			if (w > h) { asp_ctrl = EDJE_ASPECT_CONTROL_HORIZONTAL; }
+			
 			// fit so there is no blank space
-			edje_extern_object_aspect_set(o_video, 
-																		EDJE_ASPECT_CONTROL_NEITHER, w, h);
+			edje_extern_object_aspect_set(o_video, asp_ctrl, w, h);
 		}
 	else
 		{

@@ -13,6 +13,7 @@
 extern Evas *evas;
 extern char *theme;
 extern char *config;
+extern int   zoom_mode;
 
 #define NONE  0
 #define MENU  1

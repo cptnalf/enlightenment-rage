@@ -10,6 +10,7 @@ struct _Mode
 Evas        *evas = NULL;
 char        *theme = NULL;
 char        *config = NULL;
+int          zoom_mode=0;
 
 static double       start_time = 0.0;
 static Ecore_Evas  *ecore_evas = NULL;
@@ -303,6 +304,11 @@ main_key_down(void *data, Evas *e, Evas_Object *obj, void *event_info)
 					ecore_evas_cursor_set(ecore_evas, NULL, 0, 0, 0);
 					ecore_evas_fullscreen_set(ecore_evas, 0);
 				}
+		}
+	else if(!strcmp(ev->keyname, "z"))
+		{
+			zoom_mode = !zoom_mode;
+			fprintf(stderr, "zoommode=0x%X\n", zoom_mode);
 		}
 	else
 		{
