@@ -397,7 +397,7 @@ volume_file_scan(char *file)
 	vi = calloc(1, sizeof(Volume_Item));
 	vi->path = strdup(file);
 	vi->rpath = ecore_file_realpath(vi->path);
-	printf("%s -> %s\n", vi->path, vi->rpath);
+	//printf("%s -> %s\n", vi->path, vi->rpath);
 	if (!vi->rpath)
 		{
 			free(vi->path);
@@ -454,7 +454,7 @@ volume_file_scan(char *file)
 		}
 	/* FIXME: get name and genre from local "database" first - if this doesn't
 	 * hold the info we want - then invent it from the filesystem */
-
+	
 	/* 1. look for full path in db */
 	/* 2. look for just filename in db */
    
@@ -473,7 +473,11 @@ volume_file_scan(char *file)
 					if (c) *c = 0;
 					for (c = vi->name; *c; c++)
 						{
-							if (*c == '_') *c = ' ';
+							switch(*c)
+								{
+								case('.'):
+								case('_'): { *c = ' '; break; }
+								}
 						}
 				}
 		}
@@ -485,30 +489,73 @@ volume_file_scan(char *file)
 			if (f)
 				{
 					char *c, *ff;
-	     
-					ff = ecore_file_dir_get(f);
-					if (ff)
+					Evas_List* ptr = volumes;
+					
+					/* loop through all the directories we're indexing. */
+					for (; ptr; ptr = ptr->next)
 						{
-							char buf[4096];
-		  
-							snprintf(buf, sizeof(buf), "%s/%s", 
-											 ecore_file_file_get(ff),
-											 ecore_file_file_get(f));
-							for (c = buf; *c; c++)
+							int dir_len = strlen(ptr->data);
+							const char* vol_root = (const char*)ptr->data;
+							
+							/* see if our dir is a match */
+							if (! strncmp(vol_root, f, dir_len))
 								{
-									if (*c == '_') *c = ' ';
+									
+									if (strlen(f) == dir_len)
+										{
+											/* well, crap, we've got the same name.
+											 * we need to go back one dir.
+											 */
+											char* genre_start = f + strlen(f);
+											
+											while (genre_start != f && *genre_start !='/') { --genre_start; }
+											if (*genre_start == '/') { ++genre_start; }
+											
+											vi->genre = evas_stringshare_add(genre_start);
+										}
+									else
+										{
+											/* so we matched the directory to the first portion
+											 * of the filename 
+											 * verify
+											 */
+											if (vol_root[dir_len -1] == f[dir_len -1])
+												{
+													char buf[4096];
+													char* it = f + dir_len;
+													int i =0;
+													
+													while(*it=='/' && it != 0) { ++it; }
+													
+													for(;*it != 0 && *it != '/'; ++i,++it)
+														{
+															switch(*it)
+																{
+																	/* translate the name. */
+																case '_':
+																case '.':
+																	{ buf[i] = ' '; break; }
+																default: { buf[i] = *it; break; }
+																}
+														}
+													buf[i] = 0;
+													
+													vi->genre = evas_stringshare_add(buf);
+												}
+										}
 								}
-							vi->genre = evas_stringshare_add(buf);
-							free(ff);
 						}
-					else
+					
+					if (! vi->genre)
 						{
-							vi->genre = evas_stringshare_add(f);
+							vi->genre = evas_stringshare_add("Unknown");
 						}
 					free(f);
 				}
 			else
 				vi->genre = evas_stringshare_add("Unknown");
+			
+			//printf("genre=%s\n", vi->genre);
 		}
 	ecore_event_add(VOLUME_TYPE_ADD, strdup(vi->path), NULL, NULL);
 	/* FIXME: check last played and play count db entry */

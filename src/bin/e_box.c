@@ -60,6 +60,21 @@ static void _e_box_smart_clip_unset(Evas_Object *obj);
 
 /* local subsystem globals */
 static Evas_Smart *_e_smart = NULL;
+static Evas_Smart_Class _ebox = 
+	{ 
+		"e_box",
+		1,
+		_e_box_smart_add, 
+		_e_box_smart_del, 
+		_e_box_smart_move, 
+		_e_box_smart_resize,
+		_e_box_smart_show,
+		_e_box_smart_hide,
+		_e_box_smart_color_set,
+		_e_box_smart_clip_set,
+		_e_box_smart_clip_unset,
+		0
+	};
 
 /* externally accessible functions */
 EAPI Evas_Object *
@@ -649,9 +664,12 @@ static void
 _e_box_smart_init(void)
 {
    if (_e_smart) return;
-   _e_smart = evas_smart_new("e_box",
+	 /*
+   _e_smart = evas_smart_new(
+														 "e_box",
 			     _e_box_smart_add,
 			     _e_box_smart_del,
+														 layer set, raise, lower, stack above, below, 
 			     NULL, NULL, NULL, NULL, NULL,
 			     _e_box_smart_move,
 			     _e_box_smart_resize,
@@ -661,6 +679,9 @@ _e_box_smart_init(void)
 			     _e_box_smart_clip_set,
 			     _e_box_smart_clip_unset,
 			     NULL);
+	 */
+	 _e_smart = evas_smart_class_new(&_ebox);
+
 }
 
 static void

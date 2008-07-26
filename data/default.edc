@@ -261,11 +261,11 @@ collections {
 					  visible: 0;
 						rel1 {
 						  relative: 1.0 1.0;
-						  offset:   -20 -20;
+						  offset:   -30 -50;
 						}
 						rel2 {
 						  relative: 1.0 1.0;
-						  offset:   -20 -20;
+						  offset:   -30 -50;
 						}
 					  color: 255 255 255 0;
 					  color2: 0 0 0 0;
@@ -300,7 +300,7 @@ collections {
 				signal:  "passive";                 
 				source:  "";
 				action:  STATE_SET "default" 0.0;
-				transition: DECELERATE 5.0;
+				transition: DECELERATE 8.0;
 				target:  "position";
 				}
 				
@@ -782,10 +782,10 @@ collections {
 				state: "default" 0.0;
 				align: 1.0 0.0;
 				  rel1 {
-					relative: 0.75 0.05;
+					relative: 0.05 0.05;
 					}
 					rel2 {
-					relative: 0.95 0.25;
+					relative: 0.25 0.25;
 					}
 				}
 			}
