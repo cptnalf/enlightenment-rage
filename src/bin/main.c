@@ -376,6 +376,15 @@ struct _Genre
 	int count;
 };
 
+static int
+genre_item_sort(void* d1, void* d2)
+{
+	Genre* g1, * g2;
+	g1 = d1;
+	g2 = d2;
+	return strcmp(g1->label, g2->label);
+}
+
 static Evas_List *
 list_string_unique_append(Evas_List *list, const char *str, int count)
 {
@@ -603,6 +612,9 @@ main_menu_video_library(void *data)
 			list_string_free(genres);
 			if (glist)
 				{
+					/* sort the glist. */
+					glist = evas_list_sort(glist, evas_list_count(glist), genre_item_sort);
+					
 					for (l = glist; l; l = l->next)
 						{
 							Genre *ge;
