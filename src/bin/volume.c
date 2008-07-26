@@ -83,11 +83,19 @@ volume_load(void)
 				{
 					int len;
 					char *vol;
-	     
+					
 					len = strlen(buf);
+					/* remove the newline. */
+					if (buf[len - 1] == '\n') buf[len - 1] = 0;
+					
+					/* get the length. */
+					len = strlen(buf);
+					
+					/* remove certian lines... */
 					if (len < 1) continue;
 					if (buf[0] == '#') continue;
-					if (buf[len - 1] == '\n') buf[len - 1] = 0;
+					
+					/* process the rest. */
 					vol = volume_list_exists(tvolumes, buf);
 					if (!vol)
 						volume_add(buf);
