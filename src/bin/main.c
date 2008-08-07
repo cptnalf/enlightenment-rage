@@ -1,4 +1,5 @@
 #include "main.h"
+#include "database.h"
 
 typedef struct _Mode Mode;
 
@@ -34,6 +35,9 @@ static void main_menu_audio(void *data);
 static void main_menu_photo(void *data);
 static void main_menu_scan(void *data);
 static void main_menu_tv(void *data);
+static void option_zoom_mode_toggle(void* data);
+static int main_menu_video_history_track(void* data);
+
 
 int
 main(int argc, char **argv)
@@ -307,8 +311,7 @@ main_key_down(void *data, Evas *e, Evas_Object *obj, void *event_info)
 		}
 	else if(!strcmp(ev->keyname, "z"))
 		{
-			zoom_mode = !zoom_mode;
-			fprintf(stderr, "zoommode=0x%X\n", zoom_mode);
+			option_zoom_mode_toggle(0);
 		}
 	else
 		{
@@ -345,12 +348,23 @@ main_resize(Ecore_Evas *ee)
 }
 
 static void
+option_zoom_mode_toggle(void* data)
+{
+	zoom_mode = ! zoom_mode;
+}
+
+static void
 main_menu_config(void *data)
 {
+	char option1[1024];
+	
 	menu_push("menu", "Settings", NULL, NULL);
-	menu_item_add("icon/config", "Option 1",
-								"Option 1", NULL,
-								NULL, NULL, NULL, NULL, NULL);
+	
+	snprintf(option1, sizeof(option1), "Zoom mode = %s", (zoom_mode ? "on" : "off"));
+	menu_item_add("icon/config", option1,
+								option1, NULL,
+								option_zoom_mode_toggle, NULL, NULL, NULL, NULL);
+	
 	menu_item_add("icon/config", "Option 2",
 								"Option 2", NULL,
 								NULL, NULL, NULL, NULL, NULL);
@@ -360,12 +374,13 @@ main_menu_config(void *data)
 	menu_item_add("icon/config", "Option 4",
 								"Option 4", NULL,
 								NULL, NULL, NULL, NULL, NULL);
-	menu_item_enabled_set("Settings", "Option 1", 1);
+	
+	menu_item_enabled_set("Settings", option1, 1);
 	menu_item_enabled_set("Settings", "Option 2", 1);
 	menu_item_enabled_set("Settings", "Option 3", 1);
 	menu_item_enabled_set("Settings", "Option 4", 1);
 	menu_go();
-	menu_item_select("Option 1");
+	menu_item_select(option1);
 }
 
 typedef struct _Genre          Genre;
@@ -438,6 +453,7 @@ list_video_genres(void)
 					if (vi->genre)
 						genres = list_string_unique_append(genres, vi->genre, 1);
 				}
+			else { printf("?%s\n", vi->genre); }
 		}
 	return genres;
 }
@@ -482,6 +498,7 @@ video_lib_item_free(void *data)
 
 static Ecore_Timer *over_delay_timer = NULL;
 static Evas_Object *over_video = NULL;
+static Ecore_Timer* file_played_timer = NULL;
 
 static int
 main_menu_video_over_delay(void *data)
@@ -496,11 +513,35 @@ main_menu_video_over_delay(void *data)
 	return 0;
 }
 
+static int
+main_menu_video_history_track(void* data)
+{
+	char buf[4096];
+	Database* db;
+	Volume_Item* vi;
+	
+	/* kill the timer. */
+	if (file_played_timer) { ecore_timer_del(file_played_timer); }
+	
+	vi =  data;
+	snprintf(buf, sizeof(buf), "%s/media.db", config);
+	db = database_new(buf);
+	database_file_update(db, vi);
+	database_free(db);
+}
+
 static void
 main_menu_video_view(void *data)
 {
 	Video_Lib_Item *vli;
-
+	
+	if (file_played_timer)
+		{
+			/* reset the timer... */
+			ecore_timer_del(file_played_timer);
+			file_played_timer = NULL;
+		}
+	
 	vli = data;
 	if (over_delay_timer)
 		{
@@ -513,6 +554,9 @@ main_menu_video_view(void *data)
 			minivid_del(over_video);
 			over_video = NULL;
 		}
+	
+	file_played_timer = ecore_timer_add(20.0, main_menu_video_history_track, vli->vi);
+									
 	video_init("xine", vli->vi->path, "video");
 }
 

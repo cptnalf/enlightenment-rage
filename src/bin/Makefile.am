@@ -35,9 +35,11 @@ e_table.h \
 e_layout.c \
 e_layout.h \
 e_flowlayout.c \
-e_flowlayout.h
+e_flowlayout.h \
+database.c \
+database.h
 
-rage_LDADD = @my_libs@ @EVAS_LIBS@ @ECORE_LIBS@ @EDJE_LIBS@ @EMOTION_LIBS@
+rage_LDADD = @my_libs@ @EVAS_LIBS@ @ECORE_LIBS@ @EDJE_LIBS@ @EMOTION_LIBS@ -lsqlite3
 
 rage_thumb_SOURCES = \
 rage_thumb.c

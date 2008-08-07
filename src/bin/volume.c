@@ -1,5 +1,6 @@
 #include "main.h"
 
+#include "database.h"
 #include <sys/types.h>
 #include <dirent.h>
 
@@ -16,6 +17,7 @@ struct _Scan
 	Evas_List *dirstack;
 	Evas_List *items;
 	char curdir[4096];
+	void* db;
 };
 
 static char *volume_list_exists(Evas_List *list, char *vol);
@@ -43,6 +45,32 @@ int VOLUME_TYPE_DEL = 0;
 int VOLUME_SCAN_START = 0;
 int VOLUME_SCAN_STOP = 0;
 int VOLUME_SCAN_GO = 0;
+
+Volume_Item*
+volume_item_new(const char* path, const char* name, const char* genre)
+{
+	Volume_Item* item = calloc(1, sizeof(Volume_Item));
+	
+	item->path = strdup(path);
+	item->rpath = ecore_file_realpath(item->path);
+	if (name) { item->name = strdup(name); }
+	if (genre) { item->genre = strdup(genre); }
+	
+	return item;
+}
+
+void
+volume_item_free(Volume_Item* item)
+{
+	if (item)
+		{
+			free(item->path);
+			free(item->rpath);
+			free(item->name);
+			evas_stringshare_del(item->genre);
+			free(item);
+		}
+}
 
 void
 volume_init(void)
@@ -223,6 +251,7 @@ volume_type_num_get(char *type)
 const Evas_List *
 volume_items_get(void)
 {
+	printf("??0x%X\n", items);
 	return items;
 }
 
@@ -248,19 +277,52 @@ volume_file_change(void *data, Ecore_File_Monitor *fmon, Ecore_File_Event ev, co
 static int
 volume_timer(void *data)
 {
+	/* connect to database.
+	 * add idler handler to do the database query - no need for prog bar.
+	 * dump results into items.
+	 */
 	char buf[4096];
-   
-	volume_load();
-	volumes_load_timer = NULL;
-	if (volumes_file_mon) ecore_file_monitor_del(volumes_file_mon);
-	snprintf(buf, sizeof(buf), "%s/volumes", config);
-	volumes_file_mon = ecore_file_monitor_add(buf, volume_file_change, NULL);
+	
+	snprintf(buf, sizeof(buf), "%s/media.db", config);
+	
+	Database* db = database_new(buf);
+	if (db)
+		{
+			Scan *s;
+			
+			s = calloc(1, sizeof(Scan));
+			s->vol = 0;
+			s->db = db;
+			s->timer = ecore_timer_add(SCANSPEED, volume_idler, s);
+			scans = evas_list_append(scans, s);
+		}
+	
+/* 	volume_load(); */
+/* 	volumes_load_timer = NULL; */
+/* 	if (volumes_file_mon) ecore_file_monitor_del(volumes_file_mon); */
+/* 	snprintf(buf, sizeof(buf), "%s/volumes", config); */
+/* 	volumes_file_mon = ecore_file_monitor_add(buf, volume_file_change, NULL); */
 	return 0;
 }
 
 static int
 volume_idler(void *data)
 {
+	Scan* s;
+	Evas_List* list;
+	Database* db;
+	
+	s = data;
+	list = database_get_files(s->db, 0);
+	s->items = list;
+	items = s->items;
+	
+	ecore_event_add(VOLUME_SCAN_STOP, strdup("db"), NULL, NULL);
+	
+	database_free(s->db);
+	s->db = 0;
+	
+	/*
 	Scan *s;
 	DIR *dp;
 	struct dirent *de;
@@ -393,6 +455,7 @@ volume_idler(void *data)
 			return 0;
 		}
 	s->timer = ecore_timer_add(SCANSPEED, volume_idler, s);
+	*/
 	return 0;
 }
 
