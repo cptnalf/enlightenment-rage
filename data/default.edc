@@ -349,7 +349,7 @@ collections {
 				}
 				program {
 				  name: "hide_track";
-					signal: "active";
+					signal: "passive";
 					source: "";
 					action: STATE_SET "default" 0.0;
 					transition: DECELERATE 8.0;
