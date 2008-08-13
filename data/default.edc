@@ -509,10 +509,10 @@ collections {
 			name:    "go_show1";
 			signal:  "show";
 			source:  "";
-			action:  STATE_SET "active0" 0.0;
+			action:  STATE_SET "active5" 0.0;
 			transition: DECELERATE 0.2;
 			target:  "base";
-			after:   "go_show2";
+			//after:   "go_show2";
 			}
 			program {
 			name:    "go_show2";

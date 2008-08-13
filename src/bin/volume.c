@@ -313,7 +313,7 @@ volume_idler(void *data)
 	Database* db;
 	
 	s = data;
-	list = database_get_files(s->db, 0);
+	list = database_video_files_get(s->db, 0, 0);
 	s->items = list;
 	items = s->items;
 	

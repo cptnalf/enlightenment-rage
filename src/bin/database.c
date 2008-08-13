@@ -9,18 +9,24 @@
 extern Volume_Item* volume_item_new(const char* path, const char* name, const char* genre);
 
 static Evas_List* _database_results_get(char** result_table, const int rows, const int cols);
+static char db_path[4096];
+
+void database_init(const char* path)
+{
+	snprintf(db_path, sizeof(db_path), "%s", path);
+}
 
 /** create a connection to a database at path.
  *  @return pointer to the database, or NULL on failure.
  */
-Database* database_new(const char* path)
+Database* database_new()
 {
 	int result;
 	Database* db = calloc(1, sizeof(Database));
 	
 	//printf("db=%s\n", path);
 	
-	result = sqlite3_open(path, &db->db);
+	result = sqlite3_open(db_path, &db->db);
 	if (result)
 		{
 			fprintf(stderr, "error: %s\n", sqlite3_errmsg(db->db));
@@ -45,8 +51,9 @@ Database* database_new(const char* path)
 			
 			if (result != SQLITE_OK)
 				{
+					/* don't care about the error message.
 					fprintf(stderr, "unable to create table! :%s\n", errmsg);
-					sqlite3_free(errmsg);
+					*/
 				}
 		}
 	return db;
@@ -64,7 +71,7 @@ void database_free(Database* db)
 /** retrieve all the files in the database.
  *  @return list or NULL if error (or no files)
  */
-Evas_List* database_get_files(Database* db, const char* path)
+Evas_List* database_video_files_get(Database* db, int filter_type, const char* str)
 {
 	char* error_msg;
 	int result;
@@ -73,20 +80,40 @@ Evas_List* database_get_files(Database* db, const char* path)
 	char* query;
 	Evas_List* list;
 	
-	if (path)
+	switch(filter_type)
 		{
-			query = sqlite3_mprintf("SELECT path, title, genre, f_type, playcount, length, lastplayed "
-															"FROM video_files "
-															"WHERE path like '%q%s' ORDER BY path",
-															path, "%");
-		}
-	else
-		{
-			query = sqlite3_mprintf("SELECT "
-															"path, title, genre, f_type, playcount, length, lastplayed "
-															"FROM video_files "
-															"ORDER BY path");
-		}
+		default:
+		case(0):
+			{
+				query = 
+					sqlite3_mprintf("SELECT "
+													"path, title, genre, f_type, playcount, length, lastplayed "
+													"FROM video_files "
+													"ORDER BY path");
+				break;
+			}
+		case(1):
+			{
+				query = 
+					sqlite3_mprintf("SELECT "
+													"path, title, genre, f_type, playcount, length, lastplayed "
+													"FROM video_files "
+													"WHERE path like '%q%s' ORDER BY path",
+													str, "%");
+				break;
+			}
+		case(2):
+			{
+				query = 
+					sqlite3_mprintf("SELECT "
+													"path, title, genre, f_type, playcount, length, lastplayed "
+													"FROM video_files "
+													"WHERE genre = '%q' "
+													"ORDER BY path ",
+													str);
+				break;
+			}
+		};
 	
 	result = sqlite3_get_table(db->db, query, &tbl_results, &rows, &cols, &error_msg);
 	if (SQLITE_OK == result)
@@ -100,7 +127,7 @@ Evas_List* database_get_files(Database* db, const char* path)
 	return list;
 }
 
-Evas_List* database_favorites_get(Database* db)
+Evas_List* database_video_favorites_get(Database* db)
 {
 	Evas_List* list;
 	char** tbl_results=0;
@@ -124,9 +151,67 @@ Evas_List* database_favorites_get(Database* db)
 	return list;
 }
 
+/** get a list of the genres in the database.
+ */
+Evas_List* database_video_genres_get(Database* db)
+{
+	Evas_List* list=0;
+	char** tbl_results = 0;
+	int rows, cols;
+	int result;
+	char* error_msg;
+	char* query = "SELECT DISTINCT genre FROM video_files ORDER BY genre";
+	
+	result = sqlite3_get_table(db->db, query, &tbl_results, &rows, &cols, &error_msg);
+	if (SQLITE_OK == result)
+		{
+			if (rows > 0)
+				{
+					const char* genre;
+					int i;
+					int max_item = rows * cols;
+					
+					for(i=cols; i <= max_item; i += cols)
+						{
+							genre = evas_stringshare_add(tbl_results[i + 0]);
+							list = evas_list_append(list, genre);
+							genre = 0;
+						}
+				}
+			//sqlite3_free(tbl_results);
+		}
+	
+	return list;
+}
+
+int database_video_genre_count_get(Database* db, const char* genre)
+{
+	char** tbl_results =0;
+	int rows, cols;
+	int result;
+	char* error_msg;
+	char* query;
+	int count = 0;
+	
+	query = sqlite3_mprintf("SELECT COUNT(path) FROM video_files WHERE genre = %Q",
+													genre);
+	result = sqlite3_get_table(db->db, query, &tbl_results, &rows, &cols, &error_msg);
+	if (SQLITE_OK == result)
+		{
+			if (rows > 0)
+				{
+					count = atoi(tbl_results[1]);
+				}
+			//sqlite3_free(tbl_results);
+		}
+	sqlite3_free(query);
+	
+	return count;
+}
+
 /** delete a file from the database.
  */
-void database_delete_file(Database* db, const char* path)
+void database_video_file_del(Database* db, const char* path)
 {
 	int result;
 	char* error_msg;
@@ -146,7 +231,7 @@ void database_delete_file(Database* db, const char* path)
 
 /** add a new file to the database
  */
-void database_insert_file(Database* db, const Volume_Item* item)
+void database_video_file_add(Database* db, const Volume_Item* item)
 {
 	int result;
 	char* error_msg =0;
@@ -168,7 +253,7 @@ void database_insert_file(Database* db, const Volume_Item* item)
 
 /* played the file.
  */
-void database_file_update(Database* db, Volume_Item* item)
+void database_video_file_update(Database* db, Volume_Item* item)
 {
 	int result;
 	char* error_msg;
