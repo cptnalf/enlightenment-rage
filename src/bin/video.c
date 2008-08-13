@@ -229,6 +229,48 @@ video_key(Evas_Event_Key_Down *ev)
 			jump = 0.0;
 			video_shutdown();
 		}
+	else if (!strcmp(ev->keyname, "r"))
+		{
+			/* r= radio, audio track. */
+			int chl = emotion_object_audio_channel_get(o_video);
+			int chl_max = emotion_object_audio_channel_count(o_video);
+			char buf[4096];
+			const char* chl_name =0;
+			
+			if (chl_max > 0)
+				{
+					chl = ++chl % chl_max;
+					
+					emotion_object_audio_channel_set(o_video, chl);
+					chl_name = emotion_object_audio_channel_name_get(o_video, chl);
+				}
+			
+			snprintf(buf, sizeof(buf), "%02d - %s", chl, (chl_name ? chl_name : "(null)"));
+			edje_object_part_text_set(o_video_bg, "track_name", buf);
+			
+			edje_object_signal_emit(o_video_bg, "active", "");
+		}
+	else if (!strcmp(ev->keyname, "i"))
+		{
+			/* i = pIctures, subtitles */
+			char buf[4096];
+			int chl = emotion_object_spu_channel_get(o_video);
+			int chl_max = emotion_object_spu_channel_count(o_video);
+			const char* chl_name =0;
+			
+			if (chl_max > 0)
+				{
+					chl = ++chl % chl_max;
+					
+					emotion_object_spu_channel_set(o_video, chl);
+					chl_name = emotion_object_spu_channel_name_get(o_video, chl);
+				}
+			
+			snprintf(buf, sizeof(buf), "%02d - %s", chl, (chl_name ? chl_name : "(null)"));
+			edje_object_part_text_set(o_video_bg, "track_name", buf);
+			
+			edje_object_signal_emit(o_video_bg, "active", "");
+		}
 	else if (!strcmp(ev->keyname, "Home"))
 		{
 			/* FIXME: pop up menu for options etc. */
