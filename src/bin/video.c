@@ -246,6 +246,7 @@ video_key(Evas_Event_Key_Down *ev)
 				}
 			
 			snprintf(buf, sizeof(buf), "%02d - %s", chl, (chl_name ? chl_name : "(null)"));
+			printf ("%s\n", buf);
 			edje_object_part_text_set(o_video_bg, "track_name", buf);
 			
 			edje_object_signal_emit(o_video_bg, "active", "");
@@ -267,6 +268,7 @@ video_key(Evas_Event_Key_Down *ev)
 				}
 			
 			snprintf(buf, sizeof(buf), "%02d - %s", chl, (chl_name ? chl_name : "(null)"));
+			printf ("%s\n", buf);
 			edje_object_part_text_set(o_video_bg, "track_name", buf);
 			
 			edje_object_signal_emit(o_video_bg, "active", "");
