@@ -179,10 +179,10 @@ volume_index(char *vol)
 {
 	Scan *s;
    
-	s = calloc(1, sizeof(Scan));
-	s->vol = strdup(vol);
-	s->timer = ecore_timer_add(SCANSPEED, volume_idler, s);
-	scans = evas_list_append(scans, s);
+/* 	s = calloc(1, sizeof(Scan)); */
+/* 	s->vol = strdup(vol); */
+/* 	s->timer = ecore_timer_add(SCANSPEED, volume_idler, s); */
+/* 	scans = evas_list_append(scans, s); */
 }
 
 void
@@ -285,17 +285,17 @@ volume_timer(void *data)
 	
 	snprintf(buf, sizeof(buf), "%s/media.db", config);
 	
-	Database* db = database_new(buf);
-	if (db)
-		{
-			Scan *s;
+/* 	Database* db = database_new(buf); */
+/* 	if (db) */
+/* 		{ */
+/* 			Scan *s; */
 			
-			s = calloc(1, sizeof(Scan));
-			s->vol = 0;
-			s->db = db;
-			s->timer = ecore_timer_add(SCANSPEED, volume_idler, s);
-			scans = evas_list_append(scans, s);
-		}
+/* 			s = calloc(1, sizeof(Scan)); */
+/* 			s->vol = 0; */
+/* 			s->db = db; */
+/* 			s->timer = ecore_timer_add(SCANSPEED, volume_idler, s); */
+/* 			scans = evas_list_append(scans, s); */
+/* 		} */
 	
 /* 	volume_load(); */
 /* 	volumes_load_timer = NULL; */
@@ -312,15 +312,15 @@ volume_idler(void *data)
 	Evas_List* list;
 	Database* db;
 	
-	s = data;
-	list = database_video_files_get(s->db, 0, 0);
-	s->items = list;
-	items = s->items;
+/* 	s = data; */
+/* 	list = database_video_files_get(s->db, 0, 0); */
+/* 	s->items = list; */
+/* 	items = s->items; */
 	
-	ecore_event_add(VOLUME_SCAN_STOP, strdup("db"), NULL, NULL);
+/* 	ecore_event_add(VOLUME_SCAN_STOP, strdup("db"), NULL, NULL); */
 	
-	database_free(s->db);
-	s->db = 0;
+/* 	database_free(s->db); */
+/* 	s->db = 0; */
 	
 	/*
 	Scan *s;

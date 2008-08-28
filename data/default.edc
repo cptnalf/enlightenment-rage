@@ -72,11 +72,11 @@ collections {
 					  color: 0 0 0 0;
 						rel1 {
 						  relative: 0.5 0.5;
-						  offset: 0 0;
+						  offset: 0 -24;
 						}
 						rel2 {
 						  relative: 0.5 0.5;
-						  offset: 0 0;
+						  offset: 0 -24;
 						}
 					}
 					description {

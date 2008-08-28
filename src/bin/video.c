@@ -369,7 +369,7 @@ video_resize(void)
 	static int y_offset = 15; //20;
 	
 	rw -= (x_offset * 2);
-	rh -= (y_offset * 2);
+	rh -= ((y_offset * 2) + 24);
 	edje_extern_object_max_size_set(o_video, rw, rh);
 	
 	if (zoom_mode)
