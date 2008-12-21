@@ -1,4 +1,5 @@
 #include "main.h"
+#include "database.h"
 
 typedef struct _Mode Mode;
 
@@ -34,6 +35,9 @@ static void main_menu_audio(void *data);
 static void main_menu_photo(void *data);
 static void main_menu_scan(void *data);
 static void main_menu_tv(void *data);
+static void option_zoom_mode_toggle(void* data);
+static int main_menu_video_history_track(void* data);
+
 
 int
 main(int argc, char **argv)
@@ -44,6 +48,7 @@ main(int argc, char **argv)
 
 	/* init ecore, eet, evas, edje etc. */
 	start_time = ecore_time_get();
+	eina_stringshare_init();
 	eet_init();
 	ecore_init();
 	ecore_file_init();
@@ -177,7 +182,12 @@ main(int argc, char **argv)
 	background_init();
 	volume_init();
 	status_init();
-
+	{
+		char buf[4096];
+		snprintf(buf, sizeof(buf), "%s/media.db", config);
+		database_init(buf);
+	}
+	
 	/* build a default menu */
 	main_mode_push(MENU);
 	menu_push("menu", "Main", NULL, NULL);
@@ -307,8 +317,7 @@ main_key_down(void *data, Evas *e, Evas_Object *obj, void *event_info)
 		}
 	else if(!strcmp(ev->keyname, "z"))
 		{
-			zoom_mode = !zoom_mode;
-			fprintf(stderr, "zoommode=0x%X\n", zoom_mode);
+			option_zoom_mode_toggle(0);
 		}
 	else
 		{
@@ -345,12 +354,23 @@ main_resize(Ecore_Evas *ee)
 }
 
 static void
+option_zoom_mode_toggle(void* data)
+{
+	zoom_mode = ! zoom_mode;
+}
+
+static void
 main_menu_config(void *data)
 {
+	char option1[1024];
+	
 	menu_push("menu", "Settings", NULL, NULL);
-	menu_item_add("icon/config", "Option 1",
-								"Option 1", NULL,
-								NULL, NULL, NULL, NULL, NULL);
+	
+	snprintf(option1, sizeof(option1), "Zoom mode = %s", (zoom_mode ? "on" : "off"));
+	menu_item_add("icon/config", option1,
+								option1, NULL,
+								option_zoom_mode_toggle, NULL, NULL, NULL, NULL);
+	
 	menu_item_add("icon/config", "Option 2",
 								"Option 2", NULL,
 								NULL, NULL, NULL, NULL, NULL);
@@ -360,26 +380,20 @@ main_menu_config(void *data)
 	menu_item_add("icon/config", "Option 4",
 								"Option 4", NULL,
 								NULL, NULL, NULL, NULL, NULL);
-	menu_item_enabled_set("Settings", "Option 1", 1);
+	
+	menu_item_enabled_set("Settings", option1, 1);
 	menu_item_enabled_set("Settings", "Option 2", 1);
 	menu_item_enabled_set("Settings", "Option 3", 1);
 	menu_item_enabled_set("Settings", "Option 4", 1);
 	menu_go();
-	menu_item_select("Option 1");
+	menu_item_select(option1);
 }
 
-typedef struct _Genre          Genre;
-
-struct _Genre
-{
-	const char *label;
-	int count;
-};
-
 static int
-genre_item_sort(void* d1, void* d2)
+genre_item_sort(const void* d1, const void* d2)
 {
-	Genre* g1, * g2;
+	const Genre* g1;
+	const Genre* g2;
 	g1 = d1;
 	g2 = d2;
 	return strcmp(g1->label, g2->label);
@@ -426,19 +440,23 @@ list_video_genres(void)
 {
 	const Evas_List *l;
 	Evas_List *genres = NULL;
-
-	/* determine toplevel genres */
-	for (l = volume_items_get(); l; l = l->next)
+	Database* db;
+	DBIterator* it;
+	Genre* ge;
+	
+	db = database_new();
+	
+	/* get a list of genre strings */
+	it = database_video_genres_get(db);
+	
+	while(ge = database_iterator_next(it))
 		{
-			Volume_Item *vi;
-
-			vi = l->data;
-			if (!strcmp(vi->type, "video"))
-				{
-					if (vi->genre)
-						genres = list_string_unique_append(genres, vi->genre, 1);
-				}
+			genres = evas_list_append(genres, ge);
 		}
+	
+	database_iterator_free(it);
+	database_free(db);
+	
 	return genres;
 }
 
@@ -477,11 +495,13 @@ video_lib_item_free(void *data)
 	vli = data;
 	evas_stringshare_del(vli->label);
 	evas_stringshare_del(vli->path);
+	volume_item_free(vli->vi);
 	free(vli);
 }
 
 static Ecore_Timer *over_delay_timer = NULL;
 static Evas_Object *over_video = NULL;
+static Ecore_Timer* file_played_timer = NULL;
 
 static int
 main_menu_video_over_delay(void *data)
@@ -496,11 +516,33 @@ main_menu_video_over_delay(void *data)
 	return 0;
 }
 
+static int
+main_menu_video_history_track(void* data)
+{
+	Database* db;
+	Volume_Item* vi;
+	
+	/* kill the timer. */
+	if (file_played_timer) { ecore_timer_del(file_played_timer); }
+	
+	vi =  data;
+	db = database_new();
+	database_video_file_update(db, vi);
+	database_free(db);
+}
+
 static void
 main_menu_video_view(void *data)
 {
 	Video_Lib_Item *vli;
-
+	
+	if (file_played_timer)
+		{
+			/* reset the timer... */
+			ecore_timer_del(file_played_timer);
+			file_played_timer = NULL;
+		}
+	
 	vli = data;
 	if (over_delay_timer)
 		{
@@ -513,6 +555,9 @@ main_menu_video_view(void *data)
 			minivid_del(over_video);
 			over_video = NULL;
 		}
+	
+	file_played_timer = ecore_timer_add(20.0, main_menu_video_history_track, vli->vi);
+									
 	video_init("xine", vli->vi->path, "video");
 }
 
@@ -574,7 +619,7 @@ main_menu_video_library(void *data)
 	if (genres)
 		{
 			int vlpn;
-
+			
 			vlpn = strlen(vl->path);
 			printf("--- %s\n", vl->path);
 			for (l = genres; l; l = l->next)
@@ -643,39 +688,91 @@ main_menu_video_library(void *data)
 			else
 				{
 					const char *sel = NULL;
-
-					for (l = volume_items_get(); l; l = l->next)
+					DBIterator* it;
+					Volume_Item* vi;
+					Database* db = database_new();
+					it = database_video_files_genre_search(db, vl->path);
+					
+					while (vi = (Volume_Item*)database_iterator_next(it))
 						{
-							Volume_Item *vi;
-
-							vi = l->data;
-							if (!strcmp(vi->type, "video"))
-								{
-									if (!strcmp(vi->genre, vl->path))
-										{
-											char buf[4096];
-
-											buf[0] = 0;
-											vli = calloc(1, sizeof(Video_Lib_Item));
-											vli->label = evas_stringshare_add(vi->name);
-											vli->path = evas_stringshare_add(vi->rpath);
-											vli->vi = vi;
-											//			    snprintf(buf, sizeof(buf), "3:00:00");
-											menu_item_add(vli->path, vli->label,
-																		"", buf,
-																		main_menu_video_view, vli,
-																		video_lib_item_free,
-																		main_menu_video_over,
-																		main_menu_video_out);
-											menu_item_enabled_set(vl->label, vli->label, 1);
-											if (!sel) sel = vli->label;
-										}
-								}
+							char buf[4096];
+							
+							buf[0] = 0;
+							vli = calloc(1, sizeof(Video_Lib_Item));
+							vli->label = evas_stringshare_add(vi->name);
+							vli->path = evas_stringshare_add(vi->rpath);
+							vli->vi = vi;
+							//			    snprintf(buf, sizeof(buf), "3:00:00");
+							menu_item_add(vli->path, vli->label,
+														"", buf,
+														main_menu_video_view, vli,
+														video_lib_item_free,
+														main_menu_video_over,
+														main_menu_video_out);
+							menu_item_enabled_set(vl->label, vli->label, 1);
+							if (!sel) sel = vli->label;
+							
 						}
+					
 					menu_go();
 					if (sel) menu_item_select(sel);
+					
+					database_iterator_free(it);
+					database_free(db);
 				}
 		}
+}
+
+static void main_menu_video_favorites(void* data)
+{
+	const Evas_List *l;
+	Evas_List *genres = NULL, *glist = NULL;
+	Video_Lib *vl;
+	Video_Lib_Item *vli;
+
+	vli = data;
+	vl = (Video_Lib *)menu_data_get();
+	
+	{
+		Database* db;
+		DBIterator* it;
+		Volume_Item* vi;
+		const char* sel;
+		
+		db = database_new();
+		it = database_video_favorites_get(db);
+		
+		/* the next fx gives me a pointer... */
+		while( (vi = database_iterator_next(it)))
+			{
+				char buf[1024];
+				
+				/* construct the video lib item from the volume item. */
+				buf[0] = 0;
+				vli = calloc(1, sizeof(Video_Lib_Item));
+				vli->label = evas_stringshare_add(vi->name);
+				vli->path = evas_stringshare_add(vi->rpath);
+				vli->vi = vi;
+				
+				/* make the menu item,
+				 * this is a normal video file, so it gets the standard handlers.
+				 */
+				menu_item_add(vli->path, vli->label,
+											"", buf,
+											main_menu_video_view, vli,
+											video_lib_item_free,
+											main_menu_video_over,
+											main_menu_video_out);
+				menu_item_enabled_set(vl->label, vli->label, 1);
+				if (!sel) { sel = vli->label; }
+			}
+		
+		menu_go();
+		if (sel) { menu_item_select(sel); }
+		
+		database_iterator_free(it);
+		database_free(db);
+	}
 }
 
 static void
@@ -707,7 +804,7 @@ main_menu_video(void *data)
 								NULL, NULL, NULL, NULL, NULL);
 	menu_item_add("icon/favorites", "Favorites",
 								"Favorite Videos", NULL,
-								NULL, NULL, NULL, NULL, NULL);
+								main_menu_video_favorites, NULL, NULL, NULL, NULL);
 	menu_item_add("icon/book", "Library",
 								"Browse all of your Videos", NULL,
 								main_menu_video_library, NULL, NULL, NULL, NULL);

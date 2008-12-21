@@ -94,6 +94,8 @@ PKG_CHECK_MODULES([ECORE], [
    ecore-file])
 PKG_CHECK_MODULES([EMOTION], emotion)
 
+PKG_CHECK_MODULES([SQLITE3], sqlite3)
+
 my_libs="-lm "$dlopen_libs""
 AC_SUBST(my_libs)
 

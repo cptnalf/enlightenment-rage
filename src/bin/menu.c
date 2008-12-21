@@ -124,13 +124,36 @@ _menu_realize(Menu *m)
 												 0, 0, /* min */
 												 20000, 20000); /* max */
 	e_box_pack_end(o_box, m->box);
+	
+	/* there are now 4 different menu item types.
+	 * the only differences here are the colors of the images.
+	 */
+	const char* menu_item_names[] = 
+		{
+			"menu_itemly",
+			"menu_itemlb",
+			"menu_itemdp",
+			"menu_itemdy",
+			0
+		};
+	
 	for (l = m->items; l; l = l->next)
 		{
 			Menu_Item *mi;
-	
+			
 			mi = l->data;
 			mi->base = edje_object_add(evas);
-			edje_object_file_set(mi->base, theme, "menu_item");
+			
+			{
+				/* choose the menu item color based on 24 bits of the address of the
+				 * label data (this should be a char pointer)
+				 */
+				int idx = (int)(mi->label);
+				idx = idx >> 8;
+				idx %= 4;
+				edje_object_file_set(mi->base, theme, menu_item_names[idx]); //"menu_item");
+			}
+						
 			if (mi->label)
 				edje_object_part_text_set(mi->base, "label", mi->label);
 			else
