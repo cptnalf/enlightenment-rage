@@ -267,18 +267,18 @@ collections {
 					  visible: 0;
 						rel1 {
 						  relative: 1.0 1.0;
-						  offset:   -450 -50;
+						  offset:   -490 -70;
 						}
 						rel2 {
 						  relative: 1.0 1.0;
-						  offset:   -45 -50;
+						  offset:   -45 -70;
 						}
 					  color: 255 255 255 0;
 					  color2: 0 0 0 0;
 						text {
 						  text:     "0:00:00 / 0:00:00";
 						  font:     "Edje-Vera";
-						  size:     20;
+						  size:     30;
 						  min:      1 1;
 						  align:    0.5 0.5;
 						}
