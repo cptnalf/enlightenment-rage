@@ -22,6 +22,8 @@ static void video_obj_button_num_cb(void *data, Evas_Object *obj, void *event_in
 static void video_obj_button_cb(void *data, Evas_Object *obj, void *event_info);
 static void video_stopped_job_cb(void *data);
 
+static void _video_spu_audio_info_print(int show);
+
 void
 video_init(char *module, char *file, char *swallow)
 {
@@ -232,46 +234,62 @@ video_key(Evas_Event_Key_Down *ev)
 	else if (!strcmp(ev->keyname, "r"))
 		{
 			/* r= radio, audio track. */
-			int chl = emotion_object_audio_channel_get(o_video);
-			int chl_max = emotion_object_audio_channel_count(o_video);
-			char buf[4096];
-			const char* chl_name =0;
+			int chl;
+			int chl_max;
+			
+			chl = emotion_object_audio_channel_get(o_video);
+			chl_max = emotion_object_audio_channel_count(o_video);
 			
 			if (chl_max > 0)
 				{
 					chl = ++chl % chl_max;
 					
 					emotion_object_audio_channel_set(o_video, chl);
-					chl_name = emotion_object_audio_channel_name_get(o_video, chl);
 				}
 			
-			snprintf(buf, sizeof(buf), "%02d - %s", chl, (chl_name ? chl_name : "(null)"));
-			printf ("%s\n", buf);
-			edje_object_part_text_set(o_video_bg, "track_name", buf);
-			
-			edje_object_signal_emit(o_video_bg, "active", "");
+			_video_spu_audio_info_print(1);
 		}
 	else if (!strcmp(ev->keyname, "i"))
 		{
 			/* i = pIctures, subtitles */
-			char buf[4096];
-			int chl = emotion_object_spu_channel_get(o_video);
-			int chl_max = emotion_object_spu_channel_count(o_video);
-			const char* chl_name =0;
+			int chl;
+			int chl_max;
+			Evas_Bool muted = 0;
+			
+			chl = emotion_object_spu_channel_get(o_video);
+			chl_max = emotion_object_spu_channel_count(o_video);
+			muted = emotion_object_spu_mute_get(o_video);
 			
 			if (chl_max > 0)
 				{
-					chl = ++chl % chl_max;
+					/* ok, so we need to take into account the 'muting' of subs as well.
+					 * so:
+					 *  -1, 0, mute (never go back to -1...)
+					 */
+					++chl;
+					
+					/* once we've gone through the channels, turn subs off. */
+					if (chl == chl_max)
+						{
+							/* see if subs are already off... */
+							if (muted) { muted = 0; --chl; }
+							else
+								{
+									/* really only for display purposes. */
+									chl = -1;
+									muted = 1;
+								}
+							emotion_object_spu_mute_set(o_video, muted);
+						}
+					else
+						{
+							/* -1, 0, 1, mute, 0, 1, ... */
+						}
 					
 					emotion_object_spu_channel_set(o_video, chl);
-					chl_name = emotion_object_spu_channel_name_get(o_video, chl);
 				}
 			
-			snprintf(buf, sizeof(buf), "%02d - %s", chl, (chl_name ? chl_name : "(null)"));
-			printf ("%s\n", buf);
-			edje_object_part_text_set(o_video_bg, "track_name", buf);
-			
-			edje_object_signal_emit(o_video_bg, "active", "");
+			_video_spu_audio_info_print(1);
 		}
 	else if (!strcmp(ev->keyname, "Home"))
 		{
@@ -390,6 +408,44 @@ video_resize(void)
 	edje_object_part_swallow(o_video_bg, "video", o_video);
 }
 
+static void _video_spu_audio_info_print(int show)
+{
+	char buf[4096];
+	const char* aud_name =0;
+	const char* spu_name =0;
+	int aud_max, spu_max;
+	int aud_chl, spu_chl;
+	Evas_Bool spu_mute;
+	
+	aud_chl = emotion_object_audio_channel_get(o_video);
+	spu_chl = emotion_object_spu_channel_get(o_video);
+	spu_mute = emotion_object_spu_mute_get(o_video);
+	
+	aud_max = emotion_object_audio_channel_count(o_video);
+	spu_max = emotion_object_spu_channel_count(o_video);
+	
+	if (aud_max > 0)
+		{ aud_name = emotion_object_audio_channel_name_get(o_video, aud_chl); }
+	
+	/* we have subtitle channels, and the selected one is 0 or bigger. */
+	if (spu_max > 0 && spu_chl >= 0 && !spu_mute)
+		{ 
+			spu_name = emotion_object_spu_channel_name_get(o_video, spu_chl);
+			snprintf(buf, sizeof(buf), "a[%02d - %s] s[%02d - %s]",
+							 aud_chl, (aud_name ? aud_name : "eng"),
+							 spu_chl, (spu_name ? spu_name : "eng"));
+		}
+	else
+		{
+			/* subtitles are off */
+			snprintf(buf, sizeof(buf), "a[%02d - %s] s[off]",
+							 aud_chl, (aud_name ? aud_name : "eng"));
+		}
+	
+	edje_object_part_text_set(o_video_bg, "track_name", buf);
+	if (show) edje_object_signal_emit(o_video_bg, "active", "");
+}
+
 static int
 video_jump_reset_timer_cb(void *data)
 {
@@ -459,6 +515,8 @@ video_obj_stopped_cb(void *data, Evas_Object *obj, void *event_info)
 static void
 video_obj_channels_cb(void *data, Evas_Object *obj, void *event_info)
 {
+	_video_spu_audio_info_print(0);
+	
 	printf("channels changed: [AUD %i][VID %i][SPU %i]\n",
 				 emotion_object_audio_channel_count(obj),
 				 emotion_object_video_channel_count(obj),
