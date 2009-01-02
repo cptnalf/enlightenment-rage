@@ -230,7 +230,7 @@ DBIterator* database_video_files_genre_search(Database* db, const char* genre)
 	return it;
 }
 
-/** retrieves the first 25 files with a playcount greater than 0.
+/** retrieves the first 50 files with a playcount greater than 0.
  *  orders the list by playcount, title then path.
  *
  *  @return an iterator or null if no files have been played.
@@ -240,12 +240,12 @@ DBIterator* database_video_favorites_get(Database* db)
  	const char* where_clause = 
 		"WHERE playcount > 0 "
 		"ORDER BY playcount DESC, lastplayed DESC, title, path "
-		"LIMIT 25";
+		"LIMIT 50";
 	
 	return database_video_files_get(db, where_clause);
 }
 
-/** retrieve the first 25 files with a recent lastplayed date.
+/** retrieve the first 50 files with a recent lastplayed date.
  *  orders by the last play date.
  *
  *  @return an iterator.
@@ -254,7 +254,7 @@ DBIterator* database_video_recents_get(Database* db)
 {
 	const char* where_clause =
 		"ORDER BY lastplayed DESC, title, path "
-		" LIMIT 25";
+		" LIMIT 50";
 	return database_video_files_get(db, where_clause);
 }
 
