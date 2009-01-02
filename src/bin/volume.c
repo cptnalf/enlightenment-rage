@@ -47,14 +47,15 @@ int VOLUME_SCAN_STOP = 0;
 int VOLUME_SCAN_GO = 0;
 
 Volume_Item*
-volume_item_new(const char* path, const char* name, const char* genre)
+volume_item_new(const char* path, const char* name, const char* genre, const char* type)
 {
 	Volume_Item* item = calloc(1, sizeof(Volume_Item));
 	
 	item->path = strdup(path);
 	item->rpath = ecore_file_realpath(item->path);
 	if (name) { item->name = strdup(name); }
-	if (genre) { item->genre = strdup(genre); }
+	if (genre) { item->genre = evas_stringshare_add(genre); }
+	if (type) { item->type = evas_stringshare_add(type); }
 	
 	return item;
 }
@@ -68,6 +69,8 @@ volume_item_free(Volume_Item* item)
 			free(item->rpath);
 			free(item->name);
 			evas_stringshare_del(item->genre);
+			
+			if (item->type) { evas_stringshare_del(item->type); }
 			free(item);
 		}
 }
@@ -251,7 +254,6 @@ volume_type_num_get(char *type)
 const Evas_List *
 volume_items_get(void)
 {
-	printf("??0x%X\n", items);
 	return items;
 }
 
@@ -297,11 +299,13 @@ volume_timer(void *data)
 /* 			scans = evas_list_append(scans, s); */
 /* 		} */
 	
-/* 	volume_load(); */
-/* 	volumes_load_timer = NULL; */
-/* 	if (volumes_file_mon) ecore_file_monitor_del(volumes_file_mon); */
-/* 	snprintf(buf, sizeof(buf), "%s/volumes", config); */
-/* 	volumes_file_mon = ecore_file_monitor_add(buf, volume_file_change, NULL); */
+/*
+	volume_load();
+	volumes_load_timer = NULL;
+	if (volumes_file_mon) ecore_file_monitor_del(volumes_file_mon);
+	snprintf(buf, sizeof(buf), "%s/volumes", config);
+	volumes_file_mon = ecore_file_monitor_add(buf, volume_file_change, NULL);
+*/
 	return 0;
 }
 
