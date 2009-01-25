@@ -128,13 +128,12 @@ _menu_realize(Menu *m)
 	/* there are now 4 different menu item types.
 	 * the only differences here are the colors of the images.
 	 */
-	const char* menu_item_names[] = 
+	static const char const* menu_item_names[] = 
 		{
 			"menu_itemly",
 			"menu_itemlb",
 			"menu_itemdp",
-			"menu_itemdy",
-			0
+			"menu_itemdy"
 		};
 	
 	for (l = m->items; l; l = l->next)
@@ -151,6 +150,8 @@ _menu_realize(Menu *m)
 				int idx = (int)(mi->label);
 				idx = idx >> 8;
 				idx %= 4;
+				
+				if (idx < 0 || 4 <= idx) { idx = 0; }
 				edje_object_file_set(mi->base, theme, menu_item_names[idx]); //"menu_item");
 			}
 			
