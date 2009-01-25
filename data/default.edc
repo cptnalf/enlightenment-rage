@@ -1,7 +1,8 @@
  fonts {
  font: "Vera.ttf"   "Edje-Vera";
- font: "VeraBd.ttf" "Edje-Vera-Bold";
- }
+ //#font: "VeraBd.ttf" "Edje-Vera-Bold";
+ font: "verdanab.ttf" "Edje-Vera-Bold"; 
+}
 
 images {
  image: "bg-lcars.png" COMP;
@@ -361,13 +362,11 @@ collections {
 					transition: DECELERATE 8.0;
 					target: "track_name";
 				}
-				
 				program {
 				name:    "go_show0";
 				signal:  "show";
 				source:  "";
 				action:  STATE_SET "active" 0.0;
-				transition: DECELERATE 3.0;
 				target:  "clip";
 				}
 				
@@ -375,43 +374,7 @@ collections {
 				name:    "go_show1";
 				signal:  "show";
 				source:  "";
-				action:  STATE_SET "active0" 0.0;
-				transition: DECELERATE 0.5;
-				target:  "base";
-				after:   "go_show2";
-				}
-				program {
-				name:    "go_show2";
-				action:  STATE_SET "active1" 0.0;
-				transition: SINUSOIDAL 0.2;
-				target:  "base";
-				after:   "go_show3";
-				}
-				program {
-				name:    "go_show3";
-				action:  STATE_SET "active2" 0.0;
-				transition: SINUSOIDAL 0.3;
-				target:  "base";
-				after:   "go_show4";
-				}
-				program {
-				name:    "go_show4";
-				action:  STATE_SET "active3" 0.0;
-				transition: SINUSOIDAL 0.4;
-				target:  "base";
-				after:   "go_show5";
-				}
-				program {
-				name:    "go_show5";
-				action:  STATE_SET "active4" 0.0;
-				transition: SINUSOIDAL 0.5;
-				target:  "base";
-				after:   "go_show6";
-				}
-				program {
-				name:    "go_show6";
 				action:  STATE_SET "active5" 0.0;
-				transition: SINUSOIDAL 0.6;
 				target:  "base";
 				}
       }
