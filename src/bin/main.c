@@ -607,18 +607,18 @@ main_menu_video_out(void *data)
 
 /** process items from an iterator which produces Volume_Item's
  */
-void main_menu_items_add(DBIterator* it, Video_Lib* vl)
+const char* main_menu_items_add(DBIterator* it, Video_Lib* vl)
 {
 	Video_Lib_Item* vli;
 	Volume_Item* vi;
-	const char* sel =0;
+	const char* sel =NULL;
 
 	/* the next fx gives me a pointer... */
 	while (vi = (Volume_Item*)database_iterator_next(it))
 		{
 			char buf[4096];
 			
-			printf("%s=%s\n", vi->rpath, vi->name);
+			//printf("%s=%s\n", vi->rpath, vi->name);
 			/* construct the video lib item from the volume item. */			
 			buf[0] = 0;
 			vli = calloc(1, sizeof(Video_Lib_Item));
@@ -642,14 +642,8 @@ void main_menu_items_add(DBIterator* it, Video_Lib* vl)
 			if (!sel) sel = vli->label;
 		}
 	
-	menu_go();
-	if (sel) 
-		{
-			printf("selected %s\n", sel);
-			menu_item_select(sel);
-		}
-	
 	database_iterator_free(it);
+	return sel;
 }
 
 static void
@@ -682,6 +676,7 @@ main_menu_video_library(void *data)
 	if (genres)
 		{
 			int vlpn;
+			const char* sel = NULL;
 			
 			vlpn = strlen(vl->path);
 			printf("--- %s\n", vl->path);
@@ -700,7 +695,7 @@ main_menu_video_library(void *data)
 									s = strdup(ge->label + vlpn + 1);
 									p = strchr(s, '/');
 									if (p) *p = 0;
-									printf("APP %s %i\n", s, ge->count);
+									//printf("APP %s %i\n", s, ge->count);
 									glist = list_string_unique_append(glist, s, ge->count);
 									free(s);
 								}
@@ -712,7 +707,7 @@ main_menu_video_library(void *data)
 							s = strdup(ge->label);
 							p = strchr(s, '/');
 							if (p) *p = 0;
-							printf("APP2 %s %i\n", s, ge->count);
+							//printf("APP2 %s %i\n", s, ge->count);
 							glist = list_string_unique_append(glist, s, ge->count);
 							free(s);
 						}
@@ -722,6 +717,7 @@ main_menu_video_library(void *data)
 				{
 					/* sort the glist. */
 					glist = evas_list_sort(glist, evas_list_count(glist), genre_item_sort);
+					sel = evas_stringshare_add(((Genre *)(glist->data))->label);
 					
 					for (l = glist; l; l = l->next)
 						{
@@ -744,30 +740,34 @@ main_menu_video_library(void *data)
 														NULL, NULL);
 							menu_item_enabled_set(vl->label, vli->label, 1);
 						}
-					menu_go();
-					menu_item_select(((Genre *)(glist->data))->label);
+					
 					list_string_free(glist);
 				}
-			else
-				{
-					const char *sel = NULL;
-/*
-	     for (l = volume_items_get(); l; l = l->next)
-	       {
-		  Volume_Item *vi;
-		  vi = l->data;
-		  if (!strcmp(vi->type, "video"))
-		    {
+			
+			{
+				/*
+					for (l = volume_items_get(); l; l = l->next)
+					{
+					Volume_Item *vi;
+					vi = l->data;
+					if (!strcmp(vi->type, "video"))
+					{
 		      if (!strcmp(vi->genre, vl->path))
-			 {
-*/
-					DBIterator* it;
-					Database* db = database_new();
-					it = database_video_files_genre_search(db, vl->path);
-					
-					main_menu_items_add(it, vl);
-					database_free(db);
-				}
+					{
+				*/
+				const char* files_sel = NULL;
+				DBIterator* it;
+				Database* db = database_new();
+				it = database_video_files_genre_search(db, vl->path);
+				
+				files_sel = main_menu_items_add(it, vl);
+				if (! sel) { sel = files_sel; }
+				
+				database_free(db);
+			}
+			
+			menu_go();
+			menu_item_select(sel);
 		}
 }
 
@@ -788,14 +788,17 @@ static void main_menu_video_favorites(void* data)
 		}
 	
 	{
+		const char* sel = NULL;
 		Database* db;
 		DBIterator* it;
 		
 		db = database_new();
 		it = database_video_favorites_get(db);
 		
-		main_menu_items_add(it, vl);
-				
+		sel = main_menu_items_add(it, vl);
+		menu_go();
+		menu_item_select(sel);
+		
 		database_free(db);
 	}
 }
@@ -808,6 +811,7 @@ static void main_menu_video_recents(void* data)
 	Video_Lib_Item* vli;
 	Database* db;
 	DBIterator* it;
+	const char* sel = NULL;
 	
 	vli = data;
 	vl = (Video_Lib*)menu_data_get();
@@ -823,7 +827,9 @@ static void main_menu_video_recents(void* data)
 	db = database_new();
 	it = database_video_recents_get(db);
 	
-	main_menu_items_add(it, vl);
+	sel = main_menu_items_add(it, vl);
+	menu_go();
+	menu_item_select(sel);
 	
 	database_free(db);
 }
