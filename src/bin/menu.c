@@ -506,6 +506,14 @@ menu_key(Evas_Event_Key_Down *ev)
 			if ((menus) && (menus->next)) menu_pop();
 		}
 	else if (!strcmp(ev->keyname, "Return"))  menu_item_select_go();
+	else if (!strcmp(ev->keyname, "p"))
+		{
+			/* tell the mini-vid to play */
+		}
+	else if (!strcmp(ev->keyname, "s"))
+		{
+			/* tell the mini-vid to stop */
+		}
 }
 
 void

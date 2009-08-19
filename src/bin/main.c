@@ -583,8 +583,10 @@ main_menu_video_over(void *data)
 	Video_Lib_Item *vli;
 
 	vli = data;
+	/*
 	if (over_delay_timer) ecore_timer_del(over_delay_timer);
 	over_delay_timer = ecore_timer_add(0.5, main_menu_video_over_delay, vli);
+	*/
 }
 
 static void
