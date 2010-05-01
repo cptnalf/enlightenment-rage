@@ -33,24 +33,17 @@
 #include <alloca.h>
 #endif
 
+#include <Eina.h>
 #include <Evas.h>
 #include <Ecore.h>
 #include <Ecore_X.h>
 #include <Ecore_Evas.h>
 #include <Ecore_Con.h>
 #include <Ecore_Ipc.h>
-#include <Ecore_Job.h>
-#include <Ecore_Txt.h>
 #include <Ecore_File.h>
 #include <Eet.h>
 #include <Edje.h>
 #include <Emotion.h>
-
-#if HAVE___ATTRIBUTE__
-#define __UNUSED__ __attribute__((unused))
-#else
-#define __UNUSED__
-#endif
 
 #ifdef EAPI
 #undef EAPI
@@ -98,5 +91,9 @@
 #include "e_table.h"
 #include "e_layout.h"
 #include "e_flowlayout.h"
+
+#ifndef __UNUSED__
+#define __UNUSED__
+#endif
 
 #endif

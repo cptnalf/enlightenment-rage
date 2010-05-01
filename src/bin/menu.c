@@ -12,13 +12,13 @@ struct _Context
    char        *name;
    Evas_Object *o_box;
    Evas_Object *o_box2;
-   Evas_List   *menus;
+   Eina_List   *menus;
 };
 
 struct _Menu
 {
    const char    *name;
-   Evas_List     *items;
+   Eina_List     *items;
    unsigned char  selected : 1;
    Evas_Object   *box;
    void          *data;
@@ -47,7 +47,7 @@ static Menu        *_menu_current_get(void);
 static void         _menu_item_select_update(Menu *m, Menu_Item *mi);
 
 static Evas_Object *o_box = NULL;
-static Evas_List   *menus   = NULL;
+static Eina_List   *menus   = NULL;
 
 static void
 _menu_init(void)
@@ -62,7 +62,7 @@ _menu_init(void)
 static Menu *
 _menu_current_get(void)
 {
-   Evas_List *l;
+   Eina_List *l;
    Menu *m;
    
    for (l = menus; l; l = l->next)
@@ -73,12 +73,30 @@ _menu_current_get(void)
    return NULL;
 }
 
+void
+_menu_mouseover_select(void *data, Evas_Object *obj, const char *emission, const char *source) 
+{
+   menu_item_select((char*) data);
+}
+
+void
+_menu_mouseover_go(void *data, Evas_Object *obj, const char *emission, const char *source) 
+{
+   menu_item_select_go();
+}
+
+void
+_menu_mouseover_pop(void *data, Evas_Object *obj, const char *emission, const char *source) 
+{
+   if ((menus) && (menus->next)) menu_pop();
+}
+
 static void
 _menu_item_select_update(Menu *m, Menu_Item *mi)
 {
    if (mi->selected)
      {
-	Evas_List *l;
+	Eina_List *l;
 	int sel = -1, i, c;
 	double a = 0.5;
    
@@ -86,7 +104,7 @@ _menu_item_select_update(Menu *m, Menu_Item *mi)
 	if ((mi->ic)/* && (mi->icon) && (mi->icon[0] != '/')*/)
 	  edje_object_signal_emit(mi->ic, "select", "on");
 	evas_object_raise(mi->base);
-	c = evas_list_count(m->items);
+	c = eina_list_count(m->items);
 	for (i = 0, l = m->items; l; l = l->next, i++)
 	  {
 	     Menu_Item *mi2;
@@ -110,7 +128,7 @@ _menu_item_select_update(Menu *m, Menu_Item *mi)
 static void
 _menu_realize(Menu *m)
 {
-   Evas_List *l;
+   Eina_List *l;
    Evas_Coord mw, mh, w, h;
    Menu_Item *miu = NULL;
    
@@ -131,6 +149,9 @@ _menu_realize(Menu *m)
 	mi = l->data;
 	mi->base = edje_object_add(evas);
 	edje_object_file_set(mi->base, theme, "menu_item");
+	edje_object_signal_callback_add(mi->base, "mouse,move", "*", _menu_mouseover_select, (void*)mi->label);
+	edje_object_signal_callback_add(mi->base, "mouse,clicked,1", "*", _menu_mouseover_go, NULL);
+	edje_object_signal_callback_add(mi->base, "mouse,clicked,3", "*", _menu_mouseover_pop, NULL);
 	if (mi->label)
 	  edje_object_part_text_set(mi->base, "label", mi->label);
 	else
@@ -169,14 +190,14 @@ _menu_realize(Menu *m)
 	evas_object_show(mi->base);
 	if (mi->selected) miu = mi;
      }
-   e_box_min_size_get(m->box, &mw, &mh);
+   e_box_size_min_get(m->box, &mw, &mh);
    e_box_pack_options_set(m->box,
 			  1, 1, /* fill */
 			  1, 1, /* expand */
 			  0.5, 0.5, /* align */
 			  mw, mh, /* min */
 			  mw, mh /* max */);
-   e_box_min_size_get(o_box, &mw, &mh);
+   e_box_size_min_get(o_box, &mw, &mh);
    evas_object_geometry_get(o_box, NULL, NULL, &w, &h);
    evas_object_show(m->box);
    if (miu) _menu_item_select_update(m, miu);
@@ -185,7 +206,7 @@ _menu_realize(Menu *m)
 static void
 _menu_unrealize(Menu *m)
 {
-   Evas_List *l;
+   Eina_List *l;
 
    if (!m->box) return;
    evas_object_del(m->box);
@@ -205,7 +226,7 @@ _menu_unrealize(Menu *m)
 void
 menu_show(void)
 {
-   Evas_List *l;
+   Eina_List *l;
    Menu *m;
                   
    for (l = menus; l; l = l->next)
@@ -222,7 +243,7 @@ menu_show(void)
 void
 menu_hide(void)
 {
-   Evas_List *l;
+   Eina_List *l;
    Menu *m;
                   
    for (l = menus; l; l = l->next)
@@ -250,16 +271,16 @@ menu_push(const char *context, const char *name, void (*free_func) (void *data),
      }
    m = calloc(1, sizeof(Menu));
    m->selected = 1;
-   m->name = evas_stringshare_add(name);
+   m->name = eina_stringshare_add(name);
    m->data = data;
    m->free_func = free_func;
-   menus = evas_list_prepend(menus, m);
+   menus = eina_list_prepend(menus, m);
 }
 
 void
 menu_pop(void)
 {
-   Evas_List *l;
+   Eina_List *l;
    Menu *m, *mm;
     
    for (l = menus; l; l = l->next)
@@ -278,11 +299,11 @@ menu_pop(void)
 		    {
 		       if (mi->out_func) mi->out_func(mi->data);
 		    }
-		  m->items = evas_list_remove_list(m->items, m->items);
-		  if (mi->label) evas_stringshare_del(mi->label);
-		  if (mi->icon) evas_stringshare_del(mi->icon);
-		  if (mi->desc) evas_stringshare_del(mi->desc);
-		  if (mi->info) evas_stringshare_del(mi->info);
+		  m->items = eina_list_remove_list(m->items, m->items);
+		  if (mi->label) eina_stringshare_del(mi->label);
+		  if (mi->icon) eina_stringshare_del(mi->icon);
+		  if (mi->desc) eina_stringshare_del(mi->desc);
+		  if (mi->info) eina_stringshare_del(mi->info);
 		  if (mi->free_func) mi->free_func(mi->data);
 		  free(mi);
 	       }
@@ -294,9 +315,9 @@ menu_pop(void)
 		  _menu_realize(mm);
 	       }
 	     
-	     evas_stringshare_del(m->name);
-	     evas_list_free(m->items);
-	     menus = evas_list_remove_list(menus, l);
+	     eina_stringshare_del(m->name);
+	     eina_list_free(m->items);
+	     menus = eina_list_remove_list(menus, l);
 	     free(m);
 	     break;
 	  }
@@ -338,21 +359,21 @@ menu_item_add(const char *icon, const char *label,
    m = _menu_current_get();
    if (!m) return;
    mi = calloc(1, sizeof(Menu_Item));
-   if (label) mi->label = evas_stringshare_add(label);
-   if (icon) mi->icon = evas_stringshare_add(icon);
-   if (desc) mi->desc = evas_stringshare_add(desc);
-   if (info) mi->info = evas_stringshare_add(info);
+   if (label) mi->label = eina_stringshare_add(label);
+   if (icon) mi->icon = eina_stringshare_add(icon);
+   if (desc) mi->desc = eina_stringshare_add(desc);
+   if (info) mi->info = eina_stringshare_add(info);
    mi->func = func;
    mi->over_func = over_func;
    mi->out_func = out_func;
    mi->data = data;
-   m->items = evas_list_append(m->items, mi);
+   m->items = eina_list_append(m->items, mi);
 }
 
 void
 menu_item_enabled_set(const char *name, const char *label, int enabled)
 {
-   Evas_List *l;
+   Eina_List *l;
    Menu *m;
    Menu_Item *mi;
    
@@ -379,7 +400,7 @@ menu_item_enabled_set(const char *name, const char *label, int enabled)
 void
 menu_item_select(const char *label)
 {
-   Evas_List *l;
+   Eina_List *l;
    Menu *m;
    Menu_Item *mi;
  
@@ -415,14 +436,14 @@ menu_item_select(const char *label)
 void
 menu_item_select_jump(int jump)
 {
-   Evas_List *l;
+   Eina_List *l;
    Menu *m;
    Menu_Item *mi, **mia;
    int i, c, n, s;
 
    m = _menu_current_get();
    if (!m) return;
-   c = evas_list_count(m->items);
+   c = eina_list_count(m->items);
    if (c <= 0) return;
    mia = alloca(sizeof(Menu_Item *) * c);
    n = -1;
@@ -449,7 +470,7 @@ menu_item_select_jump(int jump)
 void
 menu_item_select_go(void)
 {
-   Evas_List *l;
+   Eina_List *l;
    Menu *m;
    Menu_Item *mi;
 

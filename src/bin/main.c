@@ -1,4 +1,5 @@
 #include "main.h"
+#include <Ecore_Getopt.h>
 
 typedef struct _Mode Mode;
 
@@ -10,19 +11,20 @@ struct _Mode
 Evas        *evas = NULL;
 char        *theme = NULL;
 char        *config = NULL;
+Eet_File    *eet_config = NULL;
+Ecore_Timer* mouse_timeout = NULL;
 
 static double       start_time = 0.0;
 static Ecore_Evas  *ecore_evas = NULL;
-static int          startw     = 1280;
-static int          starth     = 720;
 static Evas_Object *o_bg       = NULL;
-static Evas_List   *modes      = NULL;
+static Eina_List   *modes      = NULL;
 static int          cmode      = NONE;
 
 static void main_usage(void);
 static int main_volume_add(void *data, int type, void *ev);
 static int main_volume_del(void *data, int type, void *ev);
 static void main_key_down(void *data, Evas *e, Evas_Object *obj, void *event_info);
+static void main_mouse_move(void *data, Evas *e, Evas_Object *obj, void *event_info);
 static int  main_signal_exit(void *data, int ev_type, void *ev);
 static void main_delete_request(Ecore_Evas *ee);
 static void main_resize(Ecore_Evas *ee);
@@ -33,13 +35,55 @@ static void main_menu_audio(void *data);
 static void main_menu_photo(void *data);
 static void main_menu_scan(void *data);
 static void main_menu_tv(void *data);
+static void main_get_config(void);
+
+static const Ecore_Getopt options = {
+  "rage",
+  "%prog [options]",
+  "0.2.0",
+  "(C) 2009 Enlightenment",
+  "BSD with advertisement clause",
+  "Simple yet fancy media center.",
+  1,
+  {
+    ECORE_GETOPT_STORE_STR('e', "engine", "ecore-evas engine to use"),
+    ECORE_GETOPT_CALLBACK_NOARGS
+    ('E', "list-engines", "list ecore-evas engines",
+     ecore_getopt_callback_ecore_evas_list_engines, NULL),
+    ECORE_GETOPT_STORE_DEF_BOOL('F', "fullscreen", "fullscreen mode", 0),
+    ECORE_GETOPT_CALLBACK_ARGS
+    ('g', "geometry", "geometry to use in x:y:w:h form.", "X:Y:W:H",
+     ecore_getopt_callback_geometry_parse, NULL),
+    ECORE_GETOPT_STORE_STR
+    ('t', "theme", "path to read the theme file from"),
+    ECORE_GETOPT_VERSION('V', "version"),
+    ECORE_GETOPT_COPYRIGHT('R', "copyright"),
+    ECORE_GETOPT_LICENSE('L', "license"),
+    ECORE_GETOPT_HELP('h', "help"),
+    ECORE_GETOPT_SENTINEL
+  }
+};
 
 int
 main(int argc, char **argv)
 {
    Evas_Object *o;
-   int mode = 0, fullscreen = 0;
-   int i;
+   int args, size;
+   char *engine = NULL;
+   unsigned char quit_option = 0, fullscreen = 0;
+   Eina_Rectangle geometry = {0, 0, 0, 0};
+   Ecore_Getopt_Value values[] = {
+     ECORE_GETOPT_VALUE_STR(engine),
+     ECORE_GETOPT_VALUE_BOOL(quit_option),
+     ECORE_GETOPT_VALUE_BOOL(fullscreen),
+     ECORE_GETOPT_VALUE_PTR_CAST(geometry),
+     ECORE_GETOPT_VALUE_STR(theme),
+     ECORE_GETOPT_VALUE_BOOL(quit_option),
+     ECORE_GETOPT_VALUE_BOOL(quit_option),
+     ECORE_GETOPT_VALUE_BOOL(quit_option),
+     ECORE_GETOPT_VALUE_BOOL(quit_option),
+     ECORE_GETOPT_VALUE_NONE
+   };
 
    /* init ecore, eet, evas, edje etc. */
    start_time = ecore_time_get();
@@ -58,89 +102,38 @@ main(int argc, char **argv)
 	return -1;
      }
 
-   /* parse cmd-line options */
-   for (i = 1; i < argc; i++)
+   main_get_config();
+   //mode = *(int*)eet_read(eet_config, "/config/mode", &size);
+   fullscreen = *(int*)eet_read(eet_config, "/config/fullscreen", &size);
+
+   args = ecore_getopt_parse(&options, values, argc, argv);
+   if (args < 0)
      {
-	if (!strcmp(argv[i], "-g"))
-	  {
-	     int n, w, h;
-	     char buf[16], buf2[16];
-
-	     n = sscanf(argv[i +1], "%10[^x]x%10s", buf, buf2);
-	     if (n == 2)
-	       {
-		  w = atoi(buf);
-		  h = atoi(buf2);
-		  startw = w;
-		  starth = h;
-	       }
-	     i++;
-	  }
-	else if (!strcmp(argv[i], "-t"))
-	  {
-	     char buf[4096];
-
-	     snprintf(buf, sizeof(buf), "%s/%s.edj", PACKAGE_DATA_DIR, argv[i +1]);
-	     theme = strdup(buf);
-	     i++;
-	  }
-	else if (!strcmp(argv[i], "-cf"))
-	  {
-	     config = strdup(argv[i + 1]);
-	     i++;
-	  }
-	else if (!strcmp(argv[i], "-x11"))
-	  mode = 0;
-	else if (!strcmp(argv[i], "-gl"))
-	  mode = 1;
-	else if (!strcmp(argv[i], "-fb"))
-	  mode = 2;
-	else if (!strcmp(argv[i], "-xr"))
-	  mode = 3;
-        else if (!strcmp(argv[1], "-dfb"))
-	  mode = 4;
-	else if (!strcmp(argv[1], "-sdl"))
-	  mode = 5;
-	else if (!strcmp(argv[i], "-fs"))
-	  fullscreen = 1;
-	else
-	  main_usage();
+        fputs("ERROR: could not parse command line options.\n", stderr);
+	return -1;
      }
 
-   /* load config */
-   if (!config)
-     {
-	char buf[4096];
-
-	if (getenv("HOME"))
-	  snprintf(buf, sizeof(buf), "%s/.rage", getenv("HOME"));
-	else if (getenv("TMPDIR"))
-	  snprintf(buf, sizeof(buf), "%s/.rage", getenv("TMPDIR"));
-	else
-	  snprintf(buf, sizeof(buf), "%s/.rage", "/tmp");
-	config = strdup(buf);
-     }
-   if (!ecore_file_is_dir(config)) ecore_file_mkpath(config);
+   if (quit_option)
+     return 0;
 
    /* set up default theme if no custom theme is selected */
    if (!theme)
-     theme = strdup(PACKAGE_DATA_DIR"/default.edj");
-   /* create the canvas based on engine mode */
-   if (mode == 0)
-     ecore_evas = ecore_evas_software_x11_new(NULL, 0,  0, 0, startw, starth);
-   if (mode == 1)
-     ecore_evas = ecore_evas_gl_x11_new(NULL, 0, 0, 0, startw, starth);
-   if (mode == 2)
-     ecore_evas = ecore_evas_fb_new(NULL, 0, startw, starth);
-   if (mode == 3)
-     ecore_evas = ecore_evas_xrender_x11_new(NULL, 0, 0, 0, startw, starth);
-   if (mode == 4)
-     ecore_evas = ecore_evas_directfb_new(NULL, 0, 0, 0, startw, starth);
-   if (mode == 5)
-     ecore_evas = ecore_evas_sdl_new(NULL, startw, starth, 0, 1, 1, 0);
+     theme = eet_read(eet_config, "/config/theme", &size);
+
+   if (geometry.w <= 0)
+     geometry.w = 1280;
+   if (geometry.h <= 0)
+     geometry.h = 720;
+
+   ecore_evas = ecore_evas_new
+     (engine, geometry.x, geometry.y, geometry.w, geometry.h, NULL);
+
    if (!ecore_evas)
      {
-	printf("ERROR: Cannot create canvas\n");
+	fprintf(stderr, "ERROR: Cannot create canvas, engine: %s, "
+		"geometry: %d,%d+%dx%d\n",
+		engine ? engine : "<auto>",
+		geometry.x, geometry.y, geometry.w, geometry.h);
 	return -1;
      }
    ecore_evas_callback_delete_request_set(ecore_evas, main_delete_request);
@@ -158,9 +151,10 @@ main(int argc, char **argv)
    o = evas_object_rectangle_add(evas);
    evas_object_color_set(o, 0, 0, 0, 255);
    evas_object_move(o, 0, 0);
-   evas_object_resize(o, startw, starth);
+   evas_object_resize(o, geometry.w, geometry.h);
    evas_object_show(o);
    evas_object_event_callback_add(o, EVAS_CALLBACK_KEY_DOWN, main_key_down, NULL);
+   evas_object_event_callback_add(o, EVAS_CALLBACK_MOUSE_MOVE, main_mouse_move, NULL);
    evas_object_focus_set(o, 1);
    o_bg = o;
 
@@ -172,7 +166,8 @@ main(int argc, char **argv)
      }
 
    /* init ui elements and volume scanner */
-   layout_init();
+   if (!layout_init())
+     return -1;
    background_init();
    volume_init();
    status_init();
@@ -234,7 +229,7 @@ main_mode_push(int mode)
 
    md = calloc(1, sizeof(Mode));
    md->mode = mode;
-   modes = evas_list_prepend(modes, md);
+   modes = eina_list_prepend(modes, md);
    cmode = md->mode;
 }
 
@@ -245,7 +240,7 @@ main_mode_pop(void)
 
    if (!modes) return;
    md = modes->data;
-   modes = evas_list_remove_list(modes, modes);
+   modes = eina_list_remove_list(modes, modes);
    free(md);
    if (!modes)
      {
@@ -260,15 +255,11 @@ main_mode_pop(void)
 
 /***/
 
-static void
-main_usage(void)
+void
+main_reset(void)
 {
-   printf("Usage:\n");
-   printf("  rage "
-	  "[-x11] [-gl] [-fb] [-dfb] [-sdl] [-xr] [-g WxH] [-fs] "
-	  "[-t theme] [-cf dir]\n"
-	  );
-   exit(-1);
+   eet_close(eet_config);
+   execlp("rage", "rage", NULL);
 }
 
 static int
@@ -289,8 +280,13 @@ main_key_down(void *data, Evas *e, Evas_Object *obj, void *event_info)
    Evas_Event_Key_Down *ev;
 
    ev = (Evas_Event_Key_Down *)event_info;
-   if      (!strcmp(ev->keyname, "Escape"))
-     ecore_main_loop_quit();
+   if      ((!strcmp(ev->keyname, "Escape")) ||
+            (!strcmp(ev->keyname, "q")) ||
+            (!strcmp(ev->keyname, "Q")))
+     {
+	eet_close(eet_config);
+	ecore_main_loop_quit();
+     }
    else if (!strcmp(ev->keyname, "f"))
      {
 	if (!ecore_evas_fullscreen_get(ecore_evas))
@@ -310,6 +306,7 @@ main_key_down(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	  {
 	   case MENU: menu_key(ev); break;
 	   case VIDEO: video_key(ev); break;
+	   case DVB: dvb_key(ev); break;
 	   default: break;
 	  }
      }
@@ -342,24 +339,24 @@ static void
 main_menu_config(void *data)
 {
    menu_push("menu", "Settings", NULL, NULL);
-   menu_item_add("icon/config", "Option 1",
-		  "Option 1", NULL,
-		  NULL, NULL, NULL, NULL, NULL);
-   menu_item_add("icon/config", "Option 2",
-		  "Option 2", NULL,
-		  NULL, NULL, NULL, NULL, NULL);
-   menu_item_add("icon/config", "Option 3",
-		  "Option 3", NULL,
-		  NULL, NULL, NULL, NULL, NULL);
-   menu_item_add("icon/config", "Option 4",
-		  "Option 4", NULL,
-		  NULL, NULL, NULL, NULL, NULL);
-   menu_item_enabled_set("Settings", "Option 1", 1);
-   menu_item_enabled_set("Settings", "Option 2", 1);
-   menu_item_enabled_set("Settings", "Option 3", 1);
-   menu_item_enabled_set("Settings", "Option 4", 1);
+   menu_item_add("icon/fullscreen", "Fullscreen",
+		  "Fullscreen On/Off", NULL,
+		  config_option_fullscreen, ecore_evas, NULL, NULL, NULL);
+   menu_item_add("icon/themes", "Themes",
+		  "Select your theme", NULL,
+		  config_option_themes, NULL, NULL, NULL, NULL);
+   menu_item_add("icon/modes", "Modes",
+		  "Change the engine Rage uses", NULL,
+		  config_option_modes, ecore_evas, NULL, NULL, NULL);
+   menu_item_add("icon/volumes", "Volumes",
+		  "Edit your Volumes", NULL,
+		  config_option_volumes, NULL, NULL, NULL, NULL);
+   menu_item_enabled_set("Settings", "Fullscreen", 1);
+   menu_item_enabled_set("Settings", "Themes", 1);
+   menu_item_enabled_set("Settings", "Modes", 1);
+   menu_item_enabled_set("Settings", "Volumes", 1);
    menu_go();
-   menu_item_select("Option 1");
+   menu_item_select("Fullscreen");
 }
 
 typedef struct _Genre          Genre;
@@ -370,10 +367,10 @@ struct _Genre
    int count;
 };
 
-static Evas_List *
-list_string_unique_append(Evas_List *list, const char *str, int count)
+static Eina_List *
+list_string_unique_append(Eina_List *list, const char *str, int count)
 {
-   Evas_List *l;
+   Eina_List *l;
    Genre *ge;
 
    for (l = list; l; l = l->next)
@@ -386,31 +383,31 @@ list_string_unique_append(Evas_List *list, const char *str, int count)
 	  }
      }
    ge = calloc(1, sizeof(Genre));
-   ge->label = evas_stringshare_add(str);
+   ge->label = eina_stringshare_add(str);
    ge->count = count;
-   list = evas_list_append(list, ge);
+   list = eina_list_append(list, ge);
    return list;
 }
 
 static void
-list_string_free(Evas_List *list)
+list_string_free(Eina_List *list)
 {
    while (list)
      {
 	Genre *ge;
 
 	ge = list->data;
-	evas_stringshare_del(ge->label);
+	eina_stringshare_del(ge->label);
 	free(ge);
-	list = evas_list_remove_list(list, list);
+	list = eina_list_remove_list(list, list);
      }
 }
 
-static Evas_List *
+static Eina_List *
 list_video_genres(void)
 {
-   const Evas_List *l;
-   Evas_List *genres = NULL;
+   const Eina_List *l;
+   Eina_List *genres = NULL;
 
    /* determine toplevel genres */
    for (l = volume_items_get(); l; l = l->next)
@@ -449,8 +446,8 @@ video_lib_free(void *data)
    Video_Lib *vl;
 
    vl = data;
-   evas_stringshare_del(vl->label);
-   evas_stringshare_del(vl->path);
+   eina_stringshare_del(vl->label);
+   eina_stringshare_del(vl->path);
    free(vl);
 }
 
@@ -460,8 +457,8 @@ video_lib_item_free(void *data)
    Video_Lib_Item *vli;
 
    vli = data;
-   evas_stringshare_del(vli->label);
-   evas_stringshare_del(vli->path);
+   eina_stringshare_del(vli->label);
+   eina_stringshare_del(vli->path);
    free(vli);
 }
 
@@ -532,8 +529,8 @@ main_menu_video_out(void *data)
 static void
 main_menu_video_library(void *data)
 {
-   const Evas_List *l;
-   Evas_List *genres = NULL, *glist = NULL;
+   const Eina_List *l;
+   Eina_List *genres = NULL, *glist = NULL;
    Video_Lib *vl;
    Video_Lib_Item *vli;
 
@@ -542,15 +539,15 @@ main_menu_video_library(void *data)
    if (!vl)
      {
 	vl = calloc(1, sizeof(Video_Lib));
-	vl->label = evas_stringshare_add("Library");
-	vl->path = evas_stringshare_add("");
+	vl->label = eina_stringshare_add("Library");
+	vl->path = eina_stringshare_add("");
 	menu_push("menu", vl->label, video_lib_free, vl);
      }
    else
      {
 	vl = calloc(1, sizeof(Video_Lib));
-	vl->label = evas_stringshare_add(ecore_file_file_get(vli->path));
-	vl->path = evas_stringshare_add(vli->path);
+	vl->label = eina_stringshare_add(ecore_file_file_get(vli->path));
+	vl->path = eina_stringshare_add(vli->path);
 	menu_push("menu", vl->label, video_lib_free, vl);
      }
 
@@ -608,8 +605,8 @@ main_menu_video_library(void *data)
 		  else
 		    snprintf(buf, sizeof(buf), "%s", ge->label);
 		  vli = calloc(1, sizeof(Video_Lib_Item));
-		  vli->label = evas_stringshare_add(ge->label);
-		  vli->path = evas_stringshare_add(buf);
+		  vli->label = eina_stringshare_add(ge->label);
+		  vli->path = eina_stringshare_add(buf);
 		  snprintf(buf, sizeof(buf), "%i", ge->count);
 		  menu_item_add("icon/genre", vli->label,
 				"", buf,
@@ -639,8 +636,8 @@ main_menu_video_library(void *data)
 
 			    buf[0] = 0;
 			    vli = calloc(1, sizeof(Video_Lib_Item));
-			    vli->label = evas_stringshare_add(vi->name);
-			    vli->path = evas_stringshare_add(vi->rpath);
+			    vli->label = eina_stringshare_add(vi->name);
+			    vli->path = eina_stringshare_add(vi->rpath);
 			    vli->vi = vi;
 //			    snprintf(buf, sizeof(buf), "3:00:00");
 			    menu_item_add(vli->path, vli->label,
@@ -752,5 +749,100 @@ main_menu_scan(void *data)
 static void
 main_menu_tv(void *data)
 {
-   system("tvtime -m -n PAL -f custom");
+   if (over_delay_timer)
+     {
+	ecore_timer_del(over_delay_timer);
+	over_delay_timer = NULL;
+     }
+   main_mode_push(DVB);
+   if (over_video)
+     {
+	minivid_del(over_video);
+	over_video = NULL;
+     }
+   dvb_init("xine", "", "video");
+//   system("tvtime -m -n PAL -f custom");
+/*
+   system("xine -f --no-gui "
+          "dvb://0 "
+          "dvb://1 "
+          "dvb://2 "
+          "dvb://3 "
+          "dvb://4 "
+          "dvb://5 "
+          "dvb://6 "
+          "dvb://7 "
+          "dvb://8 "
+          "dvb://9 "
+          "dvb://10 "
+          "dvb://11 "
+          "dvb://12 "
+          "dvb://13 "
+          "dvb://14 "
+          "dvb://15 "
+          "dvb://16 "
+          "dvb://17 "
+          "dvb://18 "
+          "dvb://19 "
+          "dvb://20 "
+          "dvb://21 "
+          "dvb://22 "
+          "dvb://23 "
+          );
+ */
+}
+
+int
+main_mouse_timeout(void* data)
+{
+   ecore_evas_cursor_set(ecore_evas, "", 999, 0, 0);
+   mouse_timeout = NULL;
+   return ECORE_CALLBACK_CANCEL;
+}
+
+static void
+main_mouse_move(void *data, Evas *e, Evas_Object *obj, void *event_info)
+{
+   if (mouse_timeout)
+      ecore_timer_delay(mouse_timeout, 1-ecore_timer_pending_get(mouse_timeout));
+   else
+   {
+      mouse_timeout = ecore_timer_add(1, main_mouse_timeout, NULL);
+      ecore_evas_cursor_set(ecore_evas, NULL, 0, 0, 0);
+   }
+}
+
+static void
+main_get_config(void)
+{
+   /* load config */
+   char buf[4096];
+   int i = 0;
+
+   if (getenv("HOME"))
+      snprintf(buf, sizeof(buf), "%s/.rage", getenv("HOME"));
+   else if (getenv("TMPDIR"))
+      snprintf(buf, sizeof(buf), "%s/.rage", getenv("TMPDIR"));
+   else
+      snprintf(buf, sizeof(buf), "%s/.rage", "/tmp");
+   config = strdup(buf);
+
+   snprintf(buf, sizeof(buf), "%s/config.eet", config);
+
+   if (!ecore_file_exists(buf))
+   {
+      if (!ecore_file_is_dir(config))
+	 ecore_file_mkpath(config);
+
+      eet_config = eet_open(buf, EET_FILE_MODE_WRITE);
+
+      /* write default config */
+      eet_write(eet_config, "/config/fullscreen", &i, sizeof(int), 0);
+      eet_write(eet_config, "/config/theme", PACKAGE_DATA_DIR"/default.edj",
+	    	sizeof(PACKAGE_DATA_DIR"/default.edj"), 0);
+      eet_write(eet_config, "/config/mode", &i, sizeof(int), 0);
+      eet_close(eet_config);
+   }
+
+   eet_config = eet_open(buf, EET_FILE_MODE_READ_WRITE);
 }
