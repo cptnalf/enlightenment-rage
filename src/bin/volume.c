@@ -306,7 +306,7 @@ static int
 volume_idler(void *data)
 {
 	Scan* s;
-	Evas_List* list;
+	Eina_List* list;
 	Database* db;
 	
 /* 	s = data; */

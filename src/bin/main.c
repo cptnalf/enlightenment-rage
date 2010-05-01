@@ -314,21 +314,15 @@ main_key_down(void *data, Evas *e, Evas_Object *obj, void *event_info)
 			option_zoom_mode_toggle(0);
 		}
 	else
-	  {
-	     ecore_evas_cursor_set(ecore_evas, NULL, 0, 0, 0);
-	     ecore_evas_fullscreen_set(ecore_evas, 0);
-	  }
-     }
-   else
-     {
-	switch (cmode)
-	  {
-	   case MENU: menu_key(ev); break;
-	   case VIDEO: video_key(ev); break;
-	   case DVB: dvb_key(ev); break;
-	   default: break;
-	  }
-     }
+		{
+			switch (cmode)
+				{
+				case MENU: menu_key(ev); break;
+				case VIDEO: video_key(ev); break;
+				case DVB: dvb_key(ev); break;
+				default: break;
+				}
+		}
 }
 
 static int
@@ -442,8 +436,8 @@ list_string_free(Eina_List *list)
 static Eina_List *
 list_video_genres(void)
 {
-	const Evas_List *l;
-	Evas_List *genres = NULL;
+	const Eina_List *l;
+	Eina_List *genres = NULL;
 	Database* db;
 	DBIterator* it;
 	Genre* ge;
@@ -455,7 +449,7 @@ list_video_genres(void)
 	
 	while(ge = database_iterator_next(it))
 		{
-			genres = evas_list_append(genres, ge);
+			genres = eina_list_append(genres, ge);
 		}
 	
 	database_iterator_free(it);
@@ -626,8 +620,8 @@ const char* main_menu_items_add(DBIterator* it, Video_Lib* vl)
 			/* construct the video lib item from the volume item. */			
 			buf[0] = 0;
 			vli = calloc(1, sizeof(Video_Lib_Item));
-			vli->label = evas_stringshare_add(vi->name);
-			vli->path = evas_stringshare_add(vi->rpath);
+			vli->label = eina_stringshare_add(vi->name);
+			vli->path = eina_stringshare_add(vi->rpath);
 			vli->vi = vi;
 			
 			//			    snprintf(buf, sizeof(buf), "3:00:00");
@@ -720,8 +714,8 @@ main_menu_video_library(void *data)
 			if (glist)
 				{
 					/* sort the glist. */
-					glist = evas_list_sort(glist, evas_list_count(glist), genre_item_sort);
-					sel = evas_stringshare_add(((Genre *)(glist->data))->label);
+					glist = eina_list_sort(glist, eina_list_count(glist), genre_item_sort);
+					sel = eina_stringshare_add(((Genre *)(glist->data))->label);
 					
 					for (l = glist; l; l = l->next)
 						{
@@ -734,8 +728,8 @@ main_menu_video_library(void *data)
 							else
 								snprintf(buf, sizeof(buf), "%s", ge->label);
 							vli = calloc(1, sizeof(Video_Lib_Item));
-							vli->label = evas_stringshare_add(ge->label);
-							vli->path = evas_stringshare_add(buf);
+							vli->label = eina_stringshare_add(ge->label);
+							vli->path = eina_stringshare_add(buf);
 							snprintf(buf, sizeof(buf), "%i", ge->count);
 							menu_item_add("icon/genre", vli->label,
 														"", buf,
@@ -777,32 +771,52 @@ main_menu_video_library(void *data)
 
 static void main_menu_video_favorites(void* data)
 {
+	const Eina_List *l;
+	Eina_List *genres = NULL, *glist = NULL;
 	Video_Lib *vl;
 	Video_Lib_Item *vli;
-	
+
 	vli = data;
 	vl = (Video_Lib *)menu_data_get();
-
-	if (!vl)
-		{
-			vl = calloc(1, sizeof(Video_Lib));
-			vl->label = evas_stringshare_add("Favorites");
-			vl->path = evas_stringshare_add("");
-			menu_push("menu", vl->label, video_lib_free, vl);
-		}
 	
 	{
-		const char* sel = NULL;
 		Database* db;
 		DBIterator* it;
+		Volume_Item* vi;
+		const char* sel;
 		
 		db = database_new();
 		it = database_video_favorites_get(db);
 		
-		sel = main_menu_items_add(it, vl);
-		menu_go();
-		menu_item_select(sel);
+		/* the next fx gives me a pointer... */
+		while( (vi = database_iterator_next(it)))
+			{
+				char buf[1024];
+				
+				/* construct the video lib item from the volume item. */
+				buf[0] = 0;
+				vli = calloc(1, sizeof(Video_Lib_Item));
+				vli->label = eina_stringshare_add(vi->name);
+				vli->path = eina_stringshare_add(vi->rpath);
+				vli->vi = vi;
+				
+				/* make the menu item,
+				 * this is a normal video file, so it gets the standard handlers.
+				 */
+				menu_item_add(vli->path, vli->label,
+											"", buf,
+											main_menu_video_view, vli,
+											video_lib_item_free,
+											main_menu_video_over,
+											main_menu_video_out);
+				menu_item_enabled_set(vl->label, vli->label, 1);
+				if (!sel) { sel = vli->label; }
+			}
 		
+		menu_go();
+		if (sel) { menu_item_select(sel); }
+		
+		database_iterator_free(it);
 		database_free(db);
 	}
 }
@@ -836,58 +850,6 @@ static void main_menu_video_recents(void* data)
 	menu_item_select(sel);
 	
 	database_free(db);
-}
-
-static void main_menu_video_favorites(void* data)
-{
-	const Evas_List *l;
-	Evas_List *genres = NULL, *glist = NULL;
-	Video_Lib *vl;
-	Video_Lib_Item *vli;
-
-	vli = data;
-	vl = (Video_Lib *)menu_data_get();
-	
-	{
-		Database* db;
-		DBIterator* it;
-		Volume_Item* vi;
-		const char* sel;
-		
-		db = database_new();
-		it = database_video_favorites_get(db);
-		
-		/* the next fx gives me a pointer... */
-		while( (vi = database_iterator_next(it)))
-			{
-				char buf[1024];
-				
-				/* construct the video lib item from the volume item. */
-				buf[0] = 0;
-				vli = calloc(1, sizeof(Video_Lib_Item));
-				vli->label = evas_stringshare_add(vi->name);
-				vli->path = evas_stringshare_add(vi->rpath);
-				vli->vi = vi;
-				
-				/* make the menu item,
-				 * this is a normal video file, so it gets the standard handlers.
-				 */
-				menu_item_add(vli->path, vli->label,
-											"", buf,
-											main_menu_video_view, vli,
-											video_lib_item_free,
-											main_menu_video_over,
-											main_menu_video_out);
-				menu_item_enabled_set(vl->label, vli->label, 1);
-				if (!sel) { sel = vli->label; }
-			}
-		
-		menu_go();
-		if (sel) { menu_item_select(sel); }
-		
-		database_iterator_free(it);
-		database_free(db);
-	}
 }
 
 static void

@@ -254,7 +254,7 @@ video_key(Evas_Event_Key_Down *ev)
 			/* i = pIctures, subtitles */
 			int chl;
 			int chl_max;
-			Evas_Bool muted = 0;
+			Eina_Bool muted = 0;
 			
 			chl = emotion_object_spu_channel_get(o_video);
 			chl_max = emotion_object_spu_channel_count(o_video);
@@ -427,7 +427,7 @@ static void _video_spu_audio_info_print(int show)
 	const char* spu_name =0;
 	int aud_max, spu_max;
 	int aud_chl, spu_chl;
-	Evas_Bool spu_mute;
+	Eina_Bool spu_mute;
 	
 	aud_chl = emotion_object_audio_channel_get(o_video);
 	spu_chl = emotion_object_spu_channel_get(o_video);

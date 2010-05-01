@@ -173,7 +173,7 @@ _client_cb_data(void *data __UNUSED__, int type __UNUSED__, void *event)
 								{
 									nd2->name = strdup(e->data);
 									nd2->key = strdup(nd->key);
-									_nodes = evas_list_append(_nodes, nd2);
+									_nodes = eina_list_append(_nodes, nd2);
 								}
 						}
 				}
