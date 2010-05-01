@@ -23,7 +23,7 @@ static int _mini_timer(void *data);
 static int _mini_exe_exit(void *data, int ev_type, void *ev);
 
 static Ecore_Timer *timer = NULL;
-static Evas_List *minis = NULL;
+static Eina_List *minis = NULL;
 static int generators = 0;
 
 Evas_Object *
@@ -44,29 +44,29 @@ mini_add(Evas_Object *parent, const char *source)
 	mini->o = o;
 	mini->o_image = evas_object_image_add(evas);
    
-	edje_extern_object_aspect_set(mini->o_image, EDJE_ASPECT_CONTROL_BOTH, 640, 480);
-	edje_object_part_swallow(mini->o, "video", mini->o_image);
-	evas_object_show(mini->o_image);
-	mini->o_parent = parent;
-	snprintf(buf, sizeof(buf), "%s/.rage/thumbs", getenv("HOME"));
-	ecore_file_mkpath(buf);
-	sha1_sum((const unsigned char *)source, strlen(source), sha);
-	for (i = 0; i < 20; i++)
-		{
-			buf[(i * 2) + 0] = chmap[(sha[i] >> 4) & 0xf];
-			buf[(i * 2) + 1] = chmap[(sha[i]     ) & 0xf];
-		}
-	buf[(i * 2)] = 0;
-	snprintf(file, sizeof(file), "%s/.rage/thumbs/%s.eet", getenv("HOME"), buf);
-	mini->file = strdup(file);
-	mini->source = strdup(source);
-	evas_object_event_callback_add(o, EVAS_CALLBACK_FREE, _mini_free, mini);
-	evas_object_event_callback_add(mini->o_image, EVAS_CALLBACK_RESIZE, _mini_resize, mini);
-	if (!timer) timer = ecore_timer_add(0.1, _mini_timer, NULL);
-	minis = evas_list_append(minis, mini);
-	mini->source_mod = ecore_file_mod_time(source);
-	mini->file_mod = ecore_file_mod_time(file);
-	return o;
+   edje_extern_object_aspect_set(mini->o_image, EDJE_ASPECT_CONTROL_BOTH, 640, 480);
+   edje_object_part_swallow(mini->o, "video", mini->o_image);
+   evas_object_show(mini->o_image);
+   mini->o_parent = parent;
+   snprintf(buf, sizeof(buf), "%s/.rage/thumbs", getenv("HOME"));
+   ecore_file_mkpath(buf);
+   sha1_sum((const unsigned char *)source, strlen(source), sha);
+   for (i = 0; i < 20; i++)
+     {
+	buf[(i * 2) + 0] = chmap[(sha[i] >> 4) & 0xf];
+	buf[(i * 2) + 1] = chmap[(sha[i]     ) & 0xf];
+     }
+   buf[(i * 2)] = 0;
+   snprintf(file, sizeof(file), "%s/.rage/thumbs/%s.eet", getenv("HOME"), buf);
+   mini->file = strdup(file);
+   mini->source = strdup(source);
+   evas_object_event_callback_add(o, EVAS_CALLBACK_FREE, _mini_free, mini);
+   evas_object_event_callback_add(mini->o_image, EVAS_CALLBACK_RESIZE, _mini_resize, mini);
+   if (!timer) timer = ecore_timer_add(0.1, _mini_timer, NULL);
+   minis = eina_list_append(minis, mini);
+   mini->source_mod = ecore_file_mod_time(source);
+   mini->file_mod = ecore_file_mod_time(file);
+   return o;
 }
 
 void
@@ -113,7 +113,7 @@ _mini_free(void *data, Evas *e, Evas_Object *obj, void *event_info)
 			mini->handler = NULL;
 		}
 	free(mini);
-	minis = evas_list_remove(minis, mini);
+	minis = eina_list_remove(minis, mini);
 	if (!minis)
 		{
 			if (timer)
@@ -158,10 +158,10 @@ _mini_overtime_timer(void *data)
 static int
 _mini_timer(void *data)
 {
-	Mini *mini;
-	char buf[4096];
-	int iw = 0, ih = 0;
-	Evas_List *l;
+   Mini *mini;
+   char buf[4096];
+   int iw = 0, ih = 0;
+   Eina_List *l;
 
 	for (l = minis; l; l = l->next)
 		{

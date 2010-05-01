@@ -68,27 +68,27 @@ static char *_key_public = "public"; /* public members of the network - read and
 static char *_ident_info = "user=x;location=y;"; /* send as ident in response to a who - for now hardcoded */
 static Ecore_Ipc_Server *_server_local = NULL;
 static Ecore_Ipc_Server *_server_remote = NULL;
-static Evas_List *_clients = NULL;
-static Evas_List *_nodes = NULL;
+static Eina_List *_clients = NULL;
+static Eina_List *_nodes = NULL;
 
 static void
 _client_del(Client *cl)
 {
-	ecore_ipc_client_data_set(cl->client, NULL);
-	_clients = evas_list_remove(_clients, cl->client);
-	ecore_ipc_client_del(cl->client);
-	if (cl->ident) free(cl->ident);
-	free(cl);
+   ecore_ipc_client_data_set(cl->client, NULL);
+   _clients = eina_list_remove(_clients, cl->client);
+   ecore_ipc_client_del(cl->client);
+   if (cl->ident) free(cl->ident);
+   free(cl);
 }
 
 static void
 _node_del(Node *nd)
 {
-	_nodes = evas_list_remove(_nodes, nd);
-	if (nd->server) ecore_ipc_server_del(nd->server);
-	if (nd->name) free(nd->name);
-	if (nd->key) free(nd->key);
-	free(nd);
+   _nodes = eina_list_remove(_nodes, nd);
+   if (nd->server) ecore_ipc_server_del(nd->server);
+   if (nd->name) free(nd->name);
+   if (nd->key) free(nd->key);
+   free(nd);
 }
 
 static int
@@ -239,11 +239,11 @@ _server_cb_add(void *data __UNUSED__, int type __UNUSED__, void *event)
 	cl = calloc(1, sizeof(Client));
 	if (!cl) return 1;
    
-	cl->client = e->client;
-	if (ecore_ipc_client_server_get(e->client) == _server_local)
-		cl->local = 1;
-	ecore_ipc_client_data_set(e->client, cl);
-	_clients = evas_list_append(_clients, cl);
+   cl->client = e->client;
+   if (ecore_ipc_client_server_get(e->client) == _server_local)
+     cl->local = 1;
+   ecore_ipc_client_data_set(e->client, cl);
+   _clients = eina_list_append(_clients, cl);
 
 	ecore_ipc_client_send(cl->client, OP_VERSION, _version,
 												_version_magic1, _version_magic2, _version_magic3,
@@ -312,111 +312,111 @@ _server_cb_data(void *data __UNUSED__, int type __UNUSED__, void *event)
 				{
 					Node *nd;
 	     
-					nd = calloc(1, sizeof(Node));
-					if (nd)
-						{
-							/* FIXME: need to avoid self-connect */
-							/* no need to connect - just list known nodes - we are a server
-							 * clients would do this though - above client code is a snippet
-							 *
-							 nd->server = ecore_ipc_server_connect(ECORE_IPC_REMOTE_SYSTEM,
-							 e->data, 9889, nd);
-							 if (!nd->server)
-							 {
-							 free(nd);
-							 }
-							 else
-							*/ 		    {
-								nd->name = strdup(e->data);
-								if (cl->private_ok) nd->key = strdup(_key_private);
-								else nd->key = strdup(_key_public);
-								_nodes = evas_list_append(_nodes, nd);
-							}
-						}
-				}
-			break;
-		case OP_USER_AUTH:
-			if (!cl->version_ok)
-				{
-					_client_del(cl);
-				}
-			else
-				{
-					if ((e->data) && (e->size > 1) && (((char *)e->data)[e->size - 1] == 0))
-						{
-							if (!strcmp(e->data, _key_private))
-								{
-									cl->auth_ok = 1;
-									cl->private_ok = 1;
-									ecore_ipc_client_send(cl->client, OP_USER_WHO, 0,
-																				0, 0, 0, NULL, 0);
-								}
-							else if (!strcmp(e->data, _key_public))
-								{
-									cl->auth_ok = 1;
-									ecore_ipc_client_send(cl->client, OP_USER_WHO, 0,
-																				0, 0, 0, NULL, 0);
-								}
-							else
-								{
-									ecore_ipc_client_send(cl->client, OP_USER_AUTH_ERROR, 0,
-																				0, 0, 0, NULL, 0);
-									ecore_ipc_client_flush(cl->client);
-									_client_del(cl);
-								}
-						}
-					else
-						{
-							ecore_ipc_client_send(cl->client, OP_USER_AUTH_ERROR, 0,
-																		0, 0, 0, NULL, 0);
-							ecore_ipc_client_flush(cl->client);
-							_client_del(cl);
-						}
-				}
-			break;
-		case OP_USER_AUTH_ERROR: /* server should never get this */
-			break;
-		case OP_USER_WHO:
-			ecore_ipc_client_send(cl->client, OP_USER_IDENT, 0,
-														0, 0, 0, _ident_info, strlen(_ident_info) + 1);
-			break;
-		case OP_USER_IDENT:
-			if ((e->data) && (e->size > 1) && (((char *)e->data)[e->size - 1] == 0))
-				{
-					if (cl->ident) free(cl->ident);
-					cl->ident = strdup(e->data);
-				}
-			break;
-		case OP_MEDIA_ADD: /* server should never get this */
-			break;
-		case OP_MEDIA_DEL: /* server should never get this */
-			break;
-		case OP_MEDIA_LOCK_NOTIFY: /* server should never get this */
-			break;
-		case OP_MEDIA_UNLOCK_NOTIFY: /* server should never get this */
-			break;
-		case OP_MEDIA_LOCK:
-			break;
-		case OP_MEDIA_UNLOCK:
-			break;
-		case OP_MEDIA_GET:
-			break;
-		case OP_MEDIA_GET_DATA: /* server should never get this */
-			break;
-		case OP_MEDIA_PUT:
-			break;
-		case OP_MEDIA_PUT_DATA:
-			break;
-		case OP_MEDIA_DELETE:
-			break;
-		case OP_THUMB_GET:
-			break;
-		case OP_THUMB_GET_DATA: /* server should never get this */
-			break;
-		default:
-			break;
-		}
-	return 1;
+	     nd = calloc(1, sizeof(Node));
+	     if (nd)
+	       {
+		  /* FIXME: need to avoid self-connect */
+/* no need to connect - just list known nodes - we are a server
+ * clients would do this though - above client code is a snippet
+ *
+		  nd->server = ecore_ipc_server_connect(ECORE_IPC_REMOTE_SYSTEM,
+							e->data, 9889, nd);
+		  if (!nd->server)
+		    {
+		       free(nd);
+		    }
+		  else
+*/ 		    {
+		       nd->name = strdup(e->data);
+		       if (cl->private_ok) nd->key = strdup(_key_private);
+		       else nd->key = strdup(_key_public);
+		       _nodes = eina_list_append(_nodes, nd);
+		    }
+	       }
+	  }
+	break;
+      case OP_USER_AUTH:
+	if (!cl->version_ok)
+	  {
+	     _client_del(cl);
+	  }
+	else
+	  {
+	     if ((e->data) && (e->size > 1) && (((char *)e->data)[e->size - 1] == 0))
+	       {
+		  if (!strcmp(e->data, _key_private))
+		    {
+		       cl->auth_ok = 1;
+		       cl->private_ok = 1;
+		       ecore_ipc_client_send(cl->client, OP_USER_WHO, 0,
+					     0, 0, 0, NULL, 0);
+		    }
+		  else if (!strcmp(e->data, _key_public))
+		    {
+		       cl->auth_ok = 1;
+		       ecore_ipc_client_send(cl->client, OP_USER_WHO, 0,
+					     0, 0, 0, NULL, 0);
+		    }
+		  else
+		    {
+		       ecore_ipc_client_send(cl->client, OP_USER_AUTH_ERROR, 0,
+					     0, 0, 0, NULL, 0);
+		       ecore_ipc_client_flush(cl->client);
+		       _client_del(cl);
+		    }
+	       }
+	     else
+	       {
+		  ecore_ipc_client_send(cl->client, OP_USER_AUTH_ERROR, 0,
+					0, 0, 0, NULL, 0);
+		  ecore_ipc_client_flush(cl->client);
+		  _client_del(cl);
+	       }
+	  }
+	break;
+      case OP_USER_AUTH_ERROR: /* server should never get this */
+	break;
+      case OP_USER_WHO:
+	ecore_ipc_client_send(cl->client, OP_USER_IDENT, 0,
+			      0, 0, 0, _ident_info, strlen(_ident_info) + 1);
+	break;
+      case OP_USER_IDENT:
+	if ((e->data) && (e->size > 1) && (((char *)e->data)[e->size - 1] == 0))
+	  {
+	     if (cl->ident) free(cl->ident);
+	     cl->ident = strdup(e->data);
+	  }
+	break;
+      case OP_MEDIA_ADD: /* server should never get this */
+	break;
+      case OP_MEDIA_DEL: /* server should never get this */
+	break;
+      case OP_MEDIA_LOCK_NOTIFY: /* server should never get this */
+	break;
+      case OP_MEDIA_UNLOCK_NOTIFY: /* server should never get this */
+	break;
+      case OP_MEDIA_LOCK:
+	break;
+      case OP_MEDIA_UNLOCK:
+	break;
+      case OP_MEDIA_GET:
+	break;
+      case OP_MEDIA_GET_DATA: /* server should never get this */
+	break;
+      case OP_MEDIA_PUT:
+	break;
+      case OP_MEDIA_PUT_DATA:
+	break;
+      case OP_MEDIA_DELETE:
+	break;
+      case OP_THUMB_GET:
+	break;
+      case OP_THUMB_GET_DATA: /* server should never get this */
+	break;
+      default:
+	break;
+     }
+   return 1;
 }
 
 

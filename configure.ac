@@ -3,7 +3,7 @@ rm -f config.cache
 
 AC_INIT(rage, 0.3.0.042, enlightenment-devel@lists.sourceforge.net)
 AC_PREREQ(2.52)
-AC_CONFIG_SRCDIR(configure.in)
+AC_CONFIG_SRCDIR(configure.ac)
 
 AM_INIT_AUTOMAKE(1.6 dist-bzip2)
 AM_CONFIG_HEADER(config.h)
@@ -89,7 +89,6 @@ PKG_CHECK_MODULES([ECORE], [
    ecore-con
    ecore-evas
    ecore-ipc
-   ecore-job
    ecore-txt
    ecore-file])
 PKG_CHECK_MODULES([EMOTION], emotion)
