@@ -2,7 +2,8 @@ AUTOMAKE_OPTIONS     = 1.4 foreign
 
 MAINTAINERCLEANFILES = Makefile.in
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src/bin @EVAS_CFLAGS@ @ECORE_CFLAGS@ @EDJE_CFLAGS@ @EMOTION_CFLAGS@
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src/bin @EVAS_CFLAGS@ @ECORE_CFLAGS@ @EDJE_CFLAGS@ \
+@EMOTION_CFLAGS@ @SQLITE3_CFLAGS@
 
 bin_PROGRAMS = rage rage_thumb raged
 
@@ -39,7 +40,7 @@ e_flowlayout.h \
 database.c \
 database.h
 
-rage_LDADD = @my_libs@ @EVAS_LIBS@ @ECORE_LIBS@ @EDJE_LIBS@ @EMOTION_LIBS@ -lsqlite3
+rage_LDADD = @my_libs@ @EVAS_LIBS@ @ECORE_LIBS@ @EDJE_LIBS@ @EMOTION_LIBS@ @SQLITE3_LIBS@
 
 rage_thumb_SOURCES = \
 rage_thumb.c

@@ -26,7 +26,7 @@ static int volume_timer(void *data);
 static int volume_idler(void *data);
 static Volume_Item *volume_file_scan(char *file);
 static Volume_Item *volume_dir_scan(char *dir);
-static int volume_item_sort(void *d1, void *d2);
+static int volume_item_sort(const void *d1, const void *d2);
 static void volume_items_sort(Scan *s);
 
 static Evas_List *volumes = NULL;
@@ -54,8 +54,8 @@ volume_item_new(const char* path, const char* name, const char* genre, const cha
 	item->path = strdup(path);
 	item->rpath = ecore_file_realpath(item->path);
 	if (name) { item->name = strdup(name); }
-	if (genre) { item->genre = evas_stringshare_add(genre); }
-	if (type) { item->type = evas_stringshare_add(type); }
+	if (genre) { item->genre = eina_stringshare_add(genre); }
+	if (type) { item->type = eina_stringshare_add(type); }
 	
 	return item;
 }
@@ -68,9 +68,9 @@ volume_item_free(Volume_Item* item)
 			free(item->path);
 			free(item->rpath);
 			free(item->name);
-			evas_stringshare_del(item->genre);
+			eina_stringshare_del(item->genre);
 			
-			if (item->type) { evas_stringshare_del(item->type); }
+			if (item->type) { eina_stringshare_del(item->type); }
 			free(item);
 		}
 }
@@ -254,6 +254,7 @@ volume_type_num_get(char *type)
 const Evas_List *
 volume_items_get(void)
 {
+	printf("??0x%X\n", (unsigned int)items);
 	return items;
 }
 
@@ -668,9 +669,10 @@ volume_dir_scan(char *dir)
 }
 
 static int
-volume_item_sort(void *d1, void *d2)
+volume_item_sort(const void *d1, const void *d2)
 {
-	Volume_Item *vi1, *vi2;
+	const Volume_Item *vi1;
+	const Volume_Item *vi2;
    
 	vi1 = d1;
 	vi2 = d2;

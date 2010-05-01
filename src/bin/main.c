@@ -48,6 +48,7 @@ main(int argc, char **argv)
 
 	/* init ecore, eet, evas, edje etc. */
 	start_time = ecore_time_get();
+	eina_stringshare_init();
 	eet_init();
 	ecore_init();
 	ecore_file_init();
@@ -393,9 +394,10 @@ main_menu_config(void *data)
 }
 
 static int
-genre_item_sort(void* d1, void* d2)
+genre_item_sort(const void* d1, const void* d2)
 {
-	Genre* g1, * g2;
+	const Genre* g1;
+	const Genre* g2;
 	g1 = d1;
 	g2 = d2;
 	return strcmp(g1->label, g2->label);
@@ -834,6 +836,58 @@ static void main_menu_video_recents(void* data)
 	menu_item_select(sel);
 	
 	database_free(db);
+}
+
+static void main_menu_video_favorites(void* data)
+{
+	const Evas_List *l;
+	Evas_List *genres = NULL, *glist = NULL;
+	Video_Lib *vl;
+	Video_Lib_Item *vli;
+
+	vli = data;
+	vl = (Video_Lib *)menu_data_get();
+	
+	{
+		Database* db;
+		DBIterator* it;
+		Volume_Item* vi;
+		const char* sel;
+		
+		db = database_new();
+		it = database_video_favorites_get(db);
+		
+		/* the next fx gives me a pointer... */
+		while( (vi = database_iterator_next(it)))
+			{
+				char buf[1024];
+				
+				/* construct the video lib item from the volume item. */
+				buf[0] = 0;
+				vli = calloc(1, sizeof(Video_Lib_Item));
+				vli->label = evas_stringshare_add(vi->name);
+				vli->path = evas_stringshare_add(vi->rpath);
+				vli->vi = vi;
+				
+				/* make the menu item,
+				 * this is a normal video file, so it gets the standard handlers.
+				 */
+				menu_item_add(vli->path, vli->label,
+											"", buf,
+											main_menu_video_view, vli,
+											video_lib_item_free,
+											main_menu_video_over,
+											main_menu_video_out);
+				menu_item_enabled_set(vl->label, vli->label, 1);
+				if (!sel) { sel = vli->label; }
+			}
+		
+		menu_go();
+		if (sel) { menu_item_select(sel); }
+		
+		database_iterator_free(it);
+		database_free(db);
+	}
 }
 
 static void

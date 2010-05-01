@@ -139,7 +139,7 @@ _menu_realize(Menu *m)
 	for (l = m->items; l; l = l->next)
 		{
 			Menu_Item *mi;
-	
+			
 			mi = l->data;
 			mi->base = edje_object_add(evas);
 			
