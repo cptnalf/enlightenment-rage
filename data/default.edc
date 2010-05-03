@@ -272,7 +272,7 @@ collections {
 					  color2: 0 0 0 0;
 						text {
 						  text:     "0:00:00 / 0:00:00";
-						  font:     "Edje-Vera";
+						  font:     "Sans";
 						  size:     30;
 						  min:      1 1;
 						  align:    0.5 0.5;
@@ -307,7 +307,7 @@ collections {
 						color2: 0 0 0 0;
 						text {
 						  text: "S:01 ENG";
-							font: "Edje-Vera";
+							font: "Sans";
 							size: 20;
 							min: 1 1;
 							align: 0.5 0.5;
@@ -1193,7 +1193,8 @@ collections {
 					}
 					text {
 					text: "XXX";
-					font: "Edje-Vera-Bold";
+					font: "Sans";
+//:style=Bold
 					fit: 0 1;
 					//		  size: 24;
 					//		  min: 1 1;
@@ -1228,7 +1229,8 @@ collections {
 					}
 					text {
 					text: "XXX";
-					font: "Sans:style=Bold";
+					font: "Sans";
+//:style=Bold";
 					fit: 0 1;
 					//		  size: 24;
 					min: 1 0;
@@ -1386,7 +1388,8 @@ collections {
 					}
 					text {
 					text: "XXX";
-					font: "Sans:style=Bold";
+					font: "Sans";
+//:style=Bold";
 					fit: 0 1;
 					//		  size: 24;
 					//		  min: 1 1;
@@ -1421,7 +1424,8 @@ collections {
 					}
 					text {
 					text: "XXX";
-					font: "Sans:style=Bold";
+					font: "Sans";
+//:style=Bold";
 					fit: 0 1;
 					//		  size: 24;
 					min: 1 0;
@@ -1579,7 +1583,8 @@ collections {
 					}
 					text {
 					text: "XXX";
-					font: "Sans:style=Bold";
+					font: "Sans";
+//:style=Bold";
 					fit: 0 1;
 					//		  size: 24;
 					//		  min: 1 1;
@@ -1614,7 +1619,8 @@ collections {
 					}
 					text {
 					text: "XXX";
-					font: "Sans:style=Bold";
+					font: "Sans";
+//:style=Bold";
 					fit: 0 1;
 					//		  size: 24;
 					min: 1 0;
@@ -1772,7 +1778,8 @@ collections {
 					}
 					text {
 					text: "XXX";
-					font: "Sans:style=Bold";
+					font: "Sans";
+//:style=Bold";
 					fit: 0 1;
 					//		  size: 24;
 					//		  min: 1 1;
@@ -1807,7 +1814,8 @@ collections {
 					}
 					text {
 					text: "XXX";
-					font: "Edje-Vera-Bold";
+					font: "Sans";
+//:style=Bold";
 					fit: 0 1;
 					//		  size: 24;
 					min: 1 0;
