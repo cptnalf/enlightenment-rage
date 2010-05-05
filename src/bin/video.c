@@ -40,7 +40,8 @@ video_init(char *module, char *file, char *swallow)
 			printf("ERROR!\n");
 		}
    
-	evas_object_smart_callback_add(o, "frame_decode", video_obj_frame_decode_cb, NULL);
+	//evas_object_smart_callback_add(o, "frame_decode", video_obj_frame_decode_cb, NULL);
+	evas_object_smart_callback_add(o, "position_update", video_obj_frame_decode_cb, NULL);
 	evas_object_smart_callback_add(o, "frame_resize", video_obj_frame_resize_cb, NULL);
 	evas_object_smart_callback_add(o, "length_change", video_obj_length_change_cb, NULL);
    
@@ -485,6 +486,7 @@ video_obj_frame_decode_cb(void *data, Evas_Object *obj, void *event_info)
 	pf = pos * 100 - (ps * 100) - (pm * 60 * 100) - (ph * 60 * 60 * 100);
 	snprintf(buf, sizeof(buf), "%i:%02i:%02i.%02i / %i:%02i:%02i",
 					 ph, pm, ps, pf, lh, lm, ls);
+	//	printf("%s\n", buf);
 	edje_object_part_text_set(o_video_bg, "position", buf);
 }
 

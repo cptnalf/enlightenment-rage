@@ -1,5 +1,6 @@
 images {
  image: "bg-lcars.png" COMP;
+ image: "01875_horseheadnebula_1920x1080.png" COMP;
  image: "bg_over.png" COMP;
  
  image: "busy-1.png" COMP;
@@ -40,7 +41,8 @@ collections {
 				  aspect_preference: NONE;
 				  aspect: 1.77777778 1.77777778;
 					image {
-					  normal: "bg-lcars.png";
+					  normal: "01875_horseheadnebula_1920x1080.png";
+//"bg-lcars.png";
 					}
 				}
 			}
