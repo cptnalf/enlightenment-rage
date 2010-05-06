@@ -163,7 +163,7 @@ _menu_realize(Menu *m)
 			if (mi->info)
 				edje_object_part_text_set(mi->base, "info", mi->info);
 			else
-				edje_object_part_text_set(mi->base, "info", "<flarg>");
+				edje_object_part_text_set(mi->base, "info", "");
 			if (mi->icon)
 				{
 					if (mi->icon[0] != '/')
