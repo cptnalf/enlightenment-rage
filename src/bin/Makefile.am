@@ -42,7 +42,10 @@ database.h \
 conf_options.c \
 conf_options.h \
 dvb.c \
-dvb.h
+dvb.h \
+video_preview.h \
+video_preview.c
+
 
 rage_LDADD = @my_libs@ @EVAS_LIBS@ @ECORE_LIBS@ @EDJE_LIBS@ @EMOTION_LIBS@ @SQLITE3_LIBS@
 

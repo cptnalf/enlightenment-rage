@@ -142,18 +142,7 @@ _menu_realize(Menu *m)
 												 0, 0, /* min */
 												 20000, 20000); /* max */
 	e_box_pack_end(o_box, m->box);
-	
-	/* there are now 4 different menu item types.
-	 * the only differences here are the colors of the images.
-	 */
-	static const char const* menu_item_names[] = 
-		{
-			"menu_itemly",
-			"menu_itemlb",
-			"menu_itemdp",
-			"menu_itemdy"
-		};
-	
+		
 	for (l = m->items; l; l = l->next)
 		{
 			Menu_Item *mi;
@@ -161,17 +150,7 @@ _menu_realize(Menu *m)
 			mi = l->data;
 			mi->base = edje_object_add(evas);
 			
-			{
-				/* choose the menu item color based on 24 bits of the address of the
-				 * label data (this should be a char pointer)
-				 */
-				int idx = (int)(mi->label);
-				idx = idx >> 8;
-				idx %= 4;
-				
-				if (idx < 0 || 4 <= idx) { idx = 0; }
-				edje_object_file_set(mi->base, theme, menu_item_names[idx]); //"menu_item");
-			}
+			edje_object_file_set(mi->base, theme, "menu_itemdp");
 			
 			edje_object_signal_callback_add(mi->base, "mouse,move", "*", _menu_mouseover_select, (void*)mi->label);
 			edje_object_signal_callback_add(mi->base, "mouse,clicked,1", "*", _menu_mouseover_go, NULL);
@@ -184,7 +163,7 @@ _menu_realize(Menu *m)
 			if (mi->info)
 				edje_object_part_text_set(mi->base, "info", mi->info);
 			else
-				edje_object_part_text_set(mi->base, "info", "");
+				edje_object_part_text_set(mi->base, "info", "<flarg>");
 			if (mi->icon)
 				{
 					if (mi->icon[0] != '/')

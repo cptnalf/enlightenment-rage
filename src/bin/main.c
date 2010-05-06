@@ -528,6 +528,21 @@ main_menu_video_over_delay(void *data)
 	return 0;
 }
 
+static void
+main_menu_video_over(void *data)
+{
+	Video_Lib_Item *vli;
+
+	vli = data;
+	
+	video_preview_set(vli->vi);
+	video_preview_activate();
+	/*
+	if (over_delay_timer) ecore_timer_del(over_delay_timer);
+	over_delay_timer = ecore_timer_add(0.5, main_menu_video_over_delay, vli);
+	*/
+}
+
 static int
 main_menu_video_history_track(void* data)
 {
@@ -562,27 +577,11 @@ main_menu_video_view(void *data)
 			over_delay_timer = NULL;
 		}
 	main_mode_push(VIDEO);
-	if (over_video)
-		{
-			minivid_del(over_video);
-			over_video = NULL;
-		}
+	video_preview_destroy();
 	
 	file_played_timer = ecore_timer_add(20.0, main_menu_video_history_track, vli->vi);
 									
 	video_init("xine", vli->vi->path, "video");
-}
-
-static void
-main_menu_video_over(void *data)
-{
-	Video_Lib_Item *vli;
-
-	vli = data;
-	/*
-	if (over_delay_timer) ecore_timer_del(over_delay_timer);
-	over_delay_timer = ecore_timer_add(0.5, main_menu_video_over_delay, vli);
-	*/
 }
 
 static void
@@ -596,11 +595,8 @@ main_menu_video_out(void *data)
 			ecore_timer_del(over_delay_timer);
 			over_delay_timer = NULL;
 		}
-	if (over_video)
-		{
-			minivid_del(over_video);
-			over_video = NULL;
-		}
+	
+	video_preview_deactivate();
 }
 
 /** process items from an iterator which produces Volume_Item's

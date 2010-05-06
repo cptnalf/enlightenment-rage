@@ -198,7 +198,7 @@ _mini_timer(void *data)
 						{
 							edje_object_signal_emit(mini->o, "generate", "begin");
 							edje_object_signal_emit(mini->o_parent, "generate", "begin");
-							snprintf(buf, sizeof(buf), "nice -n 5 %s/rage_thumb \"%s\" \"%s\" -fps 10 -og 128x96",
+							snprintf(buf, sizeof(buf), "nice -n 5 %s/rage_thumb \"%s\" \"%s\" -fps 10 -og 480x480",
 											 PACKAGE_BIN_DIR, mini->source, mini->file);
 							printf("EXEC: %s\n", buf);
 							mini->gen_exe = ecore_exe_run(buf, mini);
