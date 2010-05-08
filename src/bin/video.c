@@ -6,6 +6,7 @@ static double jump = 0.0;
 static Ecore_Timer *jump_reset_timer = NULL;
 static Ecore_Job *video_stopped_job = NULL;
 static Ecore_Timer *_hide_timer = NULL;
+static Input_Listener* video_listener = NULL;
 
 static int video_menu_bg_hide_tmer_cb(void *data);
 static void video_resize(void);
@@ -33,7 +34,7 @@ video_init(char *module, char *file, char *swallow)
 	o = edje_object_add(evas);
 	edje_object_file_set(o, theme, "video_container");
 	o_video_bg = o;
-   
+	   
 	o = emotion_object_add(evas); 
 	if (!emotion_object_init(o, module))
 		{
@@ -69,7 +70,12 @@ video_init(char *module, char *file, char *swallow)
 	evas_object_show(o_video_bg);
 	
 	_hide_timer = ecore_timer_add(10.0, video_menu_bg_hide_tmer_cb, NULL);
-   
+
+	if (! video_listener)
+		{
+			video_listener = rage_input_listener_add("video", video_event_cb, NULL);
+		}
+	
 	/* FIXME: add this video to recently played list */
 }
  
@@ -95,6 +101,12 @@ video_shutdown(void)
 	o_video = NULL;
 	o_video_bg = NULL;
 	video_stopped_job = NULL;
+	
+	if (video_listener)
+		{
+			rage_input_listener_del(video_listener);
+			video_listener = NULL;
+		}
 }
  
 /* ESC   INS   PSE
@@ -116,11 +128,14 @@ video_shutdown(void)
  * TAB q   w   n
  */
 
-void
-video_key(Evas_Event_Key_Down *ev)
+Eina_Bool
+video_event_cb(void* data, rage_input in)
 {
-   
-	if      (!strcmp(ev->keyname, "bracketleft"))
+	Eina_Bool result;
+	
+	switch(in)
+		{
+		case (RAGE_INPUT_REWIND):
 		{
 			/* FIXME: play info display */
 			double p;
@@ -136,8 +151,10 @@ video_key(Evas_Event_Key_Down *ev)
 																				 NULL);
 			emotion_object_position_set(o_video, p + jump);
 			edje_object_signal_emit(o_video_bg, "active", "");
+			result = RAGE_EVENT_BLOCK;
+			break;
 		}
-	else if (!strcmp(ev->keyname, "bracketright"))
+		case (RAGE_INPUT_FASTFORWARD):
 		{
 			/* FIXME: play info display */
 			double p;
@@ -153,15 +170,19 @@ video_key(Evas_Event_Key_Down *ev)
 																				 NULL);
 			emotion_object_position_set(o_video, p + jump);
 			edje_object_signal_emit(o_video_bg, "active", "");
+			result = RAGE_EVENT_BLOCK;
+			break;
 		}
-	else if (!strcmp(ev->keyname, "p"))
+		case (RAGE_INPUT_PAUSE):
 		{
 			/* FIXME: play info display end */
 			jump = 0.0;
 			emotion_object_play_set(o_video, 1);
 			edje_object_signal_emit(o_video_bg, "active", "");
+			result = RAGE_EVENT_BLOCK;
+			break;
 		}
-	else if (!strcmp(ev->keyname, "space"))
+		case (RAGE_INPUT_KEY_SPACE):
 		{
 			/* FIXME: play info display */
 			jump = 0.0;
@@ -170,69 +191,127 @@ video_key(Evas_Event_Key_Down *ev)
 			else
 				emotion_object_play_set(o_video, 1);
 			edje_object_signal_emit(o_video_bg, "active", "");
+			break;
 		}
-	else if (!strcmp(ev->keyname, "Up"))
+		case (RAGE_INPUT_UP):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_UP);
-	else if (!strcmp(ev->keyname, "Down"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_DOWN):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_DOWN);
-	else if (!strcmp(ev->keyname, "Left"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_LEFT):
+		{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_LEFT);
-	else if (!strcmp(ev->keyname, "Right"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_RIGHT):
+		{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_RIGHT);
-	else if (!strcmp(ev->keyname, "Return"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_OK):
+		{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_SELECT);
-	else if (!strcmp(ev->keyname, "n"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_N):
+		{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_MENU1);
-	else if (!strcmp(ev->keyname, "Prior"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_PREV):
+		{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_PREV);
-	else if (!strcmp(ev->keyname, "Next"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_NEXT):
+		{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_NEXT);
-	else if (!strcmp(ev->keyname, "0"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_0):
+		{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_0);
-	else if (!strcmp(ev->keyname, "1"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_1):
+		{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_1);
-	else if (!strcmp(ev->keyname, "2"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_2):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_2);
-	else if (!strcmp(ev->keyname, "3"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_3):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_3);
-	else if (!strcmp(ev->keyname, "4"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_4):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_4);
-	else if (!strcmp(ev->keyname, "5"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_5):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_5);
-	else if (!strcmp(ev->keyname, "6"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_6):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_6);
-	else if (!strcmp(ev->keyname, "7"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_7):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_7);
-	else if (!strcmp(ev->keyname, "8"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_8):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_8);
-	else if (!strcmp(ev->keyname, "9"))
+			result = RAGE_EVENT_BLOCK;
+			break;
+		}
+		case (RAGE_INPUT_KEY_9):
+			{
 		emotion_object_event_simple_send(o_video, EMOTION_EVENT_9);
-	else if (!strcmp(ev->keyname, "k"))
-		{
-			/* FIXME: volume display */
-			emotion_object_audio_volume_set(o_video, emotion_object_audio_volume_get(o_video) - 0.1);
+			result = RAGE_EVENT_BLOCK;
+			break;
 		}
-	else if (!strcmp(ev->keyname, "l"))
+		case (RAGE_INPUT_STOP):
 		{
-			/* FIXME: volume display */
-			emotion_object_audio_volume_set(o_video, emotion_object_audio_volume_get(o_video) + 0.1);
-		}
-	else if (!strcmp(ev->keyname, "m"))
-		{
-			/* FIXME: volume display */
-			if (emotion_object_audio_mute_get(o_video))
-				emotion_object_audio_mute_set(o_video, 0);
-			else
-				emotion_object_audio_mute_set(o_video, 1);
-		}
-	else if (!strcmp(ev->keyname, "s"))
-		{
+			printf("stopping...\n");
 			/* FIXME: save position for this video */
 			main_mode_pop();
 			jump = 0.0;
 			video_shutdown();
+			result = RAGE_EVENT_BLOCK;
+			break;
 		}
-	else if (!strcmp(ev->keyname, "r"))
+		case (RAGE_INPUT_AUDIO_ROTATE):
 		{
 			/* r= radio, audio track. */
 			int chl;
@@ -249,8 +328,10 @@ video_key(Evas_Event_Key_Down *ev)
 				}
 			
 			_video_spu_audio_info_print(1);
+			result = RAGE_EVENT_BLOCK;
+			break;
 		}
-	else if (!strcmp(ev->keyname, "i"))
+		case (RAGE_INPUT_SUBTITLE_ROTATE):
 		{
 			/* i = pIctures, subtitles */
 			int chl;
@@ -291,71 +372,101 @@ video_key(Evas_Event_Key_Down *ev)
 				}
 			
 			_video_spu_audio_info_print(1);
+			result = RAGE_EVENT_BLOCK;
+			break;
 		}
-	else if (!strcmp(ev->keyname, "Home"))
-		{
-			/* FIXME: pop up menu for options etc. */
-		}
-	else if (!strcmp(ev->keyname, "Insert"))
-		{
-			/* FIXME: program ? */
-		}
-	else if (!strcmp(ev->keyname, "Pause"))
-		{
-			/* FIXME: standby ? */
-		}
-	else if (!strcmp(ev->keyname, "End"))
-		{
-			/* FIXME: input ? */
-		}
-	else if (!strcmp(ev->keyname, "BackSpace"))
-		{
-			/* FIXME: catv/clear ? */
-		}
-	else if (!strcmp(ev->keyname, "t"))
-		{
-			/* FIXME: tool ? */
-		}
-	else if (!strcmp(ev->keyname, "g"))
-		{
-			/* FIXME: tv guide ? */
-		}
-	else if (!strcmp(ev->keyname, "period"))
-		{
-	/* FIXME: ch up ? */
-        int cnum, c, i;
+
+		default:
+			{
+				result = RAGE_EVENT_CONTINUE;
+				break;
+			}
+
+	/* else if (!strcmp(ev->keyname, "k")) */
+	/* 	{ */
+	/* 		/\* FIXME: volume display *\/ */
+	/* 		emotion_object_audio_volume_set(o_video, emotion_object_audio_volume_get(o_video) - 0.1); */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "l")) */
+	/* 	{ */
+	/* 		/\* FIXME: volume display *\/ */
+	/* 		emotion_object_audio_volume_set(o_video, emotion_object_audio_volume_get(o_video) + 0.1); */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "m")) */
+	/* 	{ */
+	/* 		/\* FIXME: volume display *\/ */
+	/* 		if (emotion_object_audio_mute_get(o_video)) */
+	/* 			emotion_object_audio_mute_set(o_video, 0); */
+	/* 		else */
+	/* 			emotion_object_audio_mute_set(o_video, 1); */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "Home")) */
+	/* 	{ */
+	/* 		/\* FIXME: pop up menu for options etc. *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "Insert")) */
+	/* 	{ */
+	/* 		/\* FIXME: program ? *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "Pause")) */
+	/* 	{ */
+	/* 		/\* FIXME: standby ? *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "End")) */
+	/* 	{ */
+	/* 		/\* FIXME: input ? *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "BackSpace")) */
+	/* 	{ */
+	/* 		/\* FIXME: catv/clear ? *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "t")) */
+	/* 	{ */
+	/* 		/\* FIXME: tool ? *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "g")) */
+	/* 	{ */
+	/* 		/\* FIXME: tv guide ? *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "period")) */
+	/* 	{ */
+	/* /\* FIXME: ch up ? *\/ */
+  /*       int cnum, c, i; */
         
-        cnum = emotion_object_spu_channel_count(o_video);
-        printf("cum: %i\n", cnum);
-        c = emotion_object_spu_channel_get(o_video);
-        for (c = 0; c < cnum; c++)
-          {
-             printf("%i: %s\n", emotion_object_spu_channel_name_get(o_video, c));
-          }
-        c++;
-        if (c >= cnum) c = 0;
-        emotion_object_spu_channel_set(o_video, c);
+  /*       cnum = emotion_object_spu_channel_count(o_video); */
+  /*       printf("cum: %i\n", cnum); */
+  /*       c = emotion_object_spu_channel_get(o_video); */
+  /*       for (c = 0; c < cnum; c++) */
+  /*         { */
+  /*            printf("%i: %s\n", emotion_object_spu_channel_name_get(o_video, c)); */
+  /*         } */
+  /*       c++; */
+  /*       if (c >= cnum) c = 0; */
+  /*       emotion_object_spu_channel_set(o_video, c); */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "comma")) */
+	/* 	{ */
+	/* 		/\* FIXME: ch down ? *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "Tab")) */
+	/* 	{ */
+	/* 		/\* FIXME: photo ? *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "q")) */
+	/* 	{ */
+	/* 		/\* FIXME: repeat ? *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "w")) */
+	/* 	{ */
+	/* 		/\* FIXME: rotate ? (zoom mode)  *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "n")) */
+	/* 	{ */
+	/* 		/\* FIXME: play info display toggle *\/ */
+	/* 	} */
 		}
-	else if (!strcmp(ev->keyname, "comma"))
-		{
-			/* FIXME: ch down ? */
-		}
-	else if (!strcmp(ev->keyname, "Tab"))
-		{
-			/* FIXME: photo ? */
-		}
-	else if (!strcmp(ev->keyname, "q"))
-		{
-			/* FIXME: repeat ? */
-		}
-	else if (!strcmp(ev->keyname, "w"))
-		{
-			/* FIXME: rotate ? (zoom mode)  */
-		}
-	else if (!strcmp(ev->keyname, "n"))
-		{
-			/* FIXME: play info display toggle */
-		}
+	
+	return result;
 }
 
 

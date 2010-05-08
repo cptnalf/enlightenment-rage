@@ -1,5 +1,8 @@
+
+#include "input.h"
+
 void dvb_init(char *module, char *file, char *swallow);
 void dvb_shutdown(void);
-void dvb_key(Evas_Event_Key_Down *ev);
+Eina_Bool dvb_event_cb(void* data, rage_input in);
 
     

@@ -417,7 +417,7 @@ group {
 
 group {
  name: "menu_itemdp";
- min: 1000 40; // size hints for the ui
+ min: 600 40; // size hints for the ui
 	parts {
 		part {
 		name: "_bg0";
@@ -453,9 +453,11 @@ group {
 				border: 18 18 18 18;
 				}
 				rel1 {
+				relative: 0.0 0.0;
 				offset:  -6 -6;
 				}
 				rel2 {
+				relative: 1.0 1.0;
 				offset:  6 6;
 				}
 			}
@@ -463,9 +465,11 @@ group {
 			state: "active" 0.0;
 			inherit: "default" 0.0;
 				rel1 {
+				relative: 0.0 0.0;
 				offset:  -6 -6;
 				}
 				rel2 {
+				relative: 1.0 1.0;
 				offset:  6 6;
 				}
 			}

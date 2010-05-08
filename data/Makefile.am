@@ -3,61 +3,79 @@
 MAINTAINERCLEANFILES = Makefile.in
 
 EDJE_CC = edje_cc
-EDJE_FLAGS = -v -id $(top_srcdir)/data -fd $(top_srcdir)/data
+EDJE_FLAGS = -v \
+	-id $(top_srcdir)/data/images \
+	 -fd $(top_srcdir)/data/fonts
 
 filesdir = $(datadir)/rage
 
 files_DATA = \
 default.edj
 
+IMG_BG= \
+	images/01875_horseheadnebula_1920x1080.png \
+	images/bg-lcars.png \
+	images/bg_over.png \
+	images/bg.png
+
+IMG_ICONS= \
+images/audio.png \
+images/audios.png \
+images/book.png \
+images/bug.png \
+images/busy-1.png \
+images/busy-2.png \
+images/busy-3.png \
+images/busy-4.png \
+images/busy-5.png \
+images/busy-6.png \
+images/busy-7.png \
+images/busy-8.png \
+images/busy-9.png \
+images/config.png \
+images/dvd.png \
+images/dvd_rip.png \
+images/dvd_watch.png \
+images/favorites.png \
+images/genre.png \
+images/photo.png \
+images/photos.png \
+images/resume.png \
+images/update.png \
+images/video.png \
+images/videos.png
+
+IMG_MENUITEM= \
+images/mitem2-dp.png \
+images/mitem2-dy.png \
+images/mitem2-lb.png \
+images/mitem2-lcars.png \
+images/mitem2-ly.png \
+images/mitem2.png \
+images/mitem-dp.png \
+images/mitem-dy.png \
+images/mitem-lb.png \
+images/mitem-lcars.png \
+images/mitem-ly.png \
+images/mitem.png
+
+IMG_OTHER= \
+images/miniover.png \
+images/selshadow.png \
+images/shad_circ.png
+
+EDC_SRC= \
+	default.edc \
+	menuitems.edc \
+	mini.edc \
+	videopreview.edc
+
 EXTRA_DIST = \
-default.edc \
-menuitems.edc \
-mini.edc \
-videopreview.edc \
-01875_horseheadnebula_1920x1080.png \
-audio.png \
-audios.png \
-bg-lcars.png \
-bg_over.png \
-bg.png \
-book.png \
-bug.png \
-busy-1.png \
-busy-2.png \
-busy-3.png \
-busy-4.png \
-busy-5.png \
-busy-6.png \
-busy-7.png \
-busy-8.png \
-busy-9.png \
-config.png \
-dvd.png \
-dvd_rip.png \
-dvd_watch.png \
-favorites.png \
-genre.png \
-miniover.png \
-mitem2-dp.png \
-mitem2-dy.png \
-mitem2-lb.png \
-mitem2-lcars.png \
-mitem2-ly.png \
-mitem2.png \
-mitem-dp.png \
-mitem-dy.png \
-mitem-lb.png \
-mitem-lcars.png \
-mitem-ly.png \
-mitem.png \
-photo.png \
-photos.png \
-resume.png \
-selshadow.png \
-update.png \
-video.png \
-videos.png 
+	$(IMG_BG) \
+	$(IMG_ICONS) \
+	$(IMG_MENUITEM) \
+	$(IMG_OTHER) \
+	$(EDC_SRC)
 
 default.edj: Makefile $(EXTRA_DIST)
 	$(EDJE_CC) $(EDJE_FLAGS) \

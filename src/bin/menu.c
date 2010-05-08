@@ -48,6 +48,7 @@ static void         _menu_item_select_update(Menu *m, Menu_Item *mi);
 
 static Evas_Object *o_box = NULL;
 static Eina_List   *menus   = NULL;
+static Input_Listener* menu_il = NULL;
 
 static void
 _menu_init(void)
@@ -56,6 +57,12 @@ _menu_init(void)
 	o_box = e_box_add(evas);
 	e_box_orientation_set(o_box, 1);
 	e_box_align_set(o_box, 0.5, 0.5);
+	/* e_box_pack_options_set(o_box, */
+	/* 											 1, 0, */
+	/* 											 0, 1, */
+	/* 											 0.5, 0.5, */
+	/* 											 100, 100, 100, 100); */
+	
 	layout_swallow("menu", o_box);
 }
 
@@ -131,8 +138,9 @@ _menu_realize(Menu *m)
    Eina_List *l;
    Evas_Coord mw, mh, w, h;
    Menu_Item *miu = NULL;
-   
-	if (m->box) return;
+
+	 if (m->box) return;
+	 
 	m->box = e_box_add(evas);
 	e_box_orientation_set(m->box, 0);
 	e_box_pack_options_set(m->box, 
@@ -230,9 +238,12 @@ _menu_unrealize(Menu *m)
 void
 menu_show(void)
 {
-   Eina_List *l;
-   Menu *m;
-                  
+	Eina_List *l;
+	Menu *m;
+	
+	if (! menu_il)
+		{ menu_il = rage_input_listener_add("menu", menu_event_cb, NULL); }
+	
 	for (l = menus; l; l = l->next)
 		{
 			m = l->data;
@@ -247,9 +258,11 @@ menu_show(void)
 void
 menu_hide(void)
 {
-   Eina_List *l;
-   Menu *m;
-                  
+	Eina_List *l;
+	Menu *m;
+	
+	rage_input_listener_del(menu_il);
+	menu_il = NULL;
 	for (l = menus; l; l = l->next)
 		{
 			m = l->data;
@@ -343,6 +356,9 @@ menu_go(void)
 {
 	Menu *m;
  
+	if (! menu_il)
+		{ menu_il = rage_input_listener_add("menu", menu_event_cb, NULL); }
+
 	m = _menu_current_get();
 	if (!m) return;
 	_menu_realize(m);
@@ -494,27 +510,72 @@ menu_item_select_go(void)
   // FIXME: start timer/animator if not running
 }
 
-void
-menu_key(Evas_Event_Key_Down *ev)
+Eina_Bool
+menu_event_cb(void* data, rage_input in)
 {
-	if (!strcmp(ev->keyname, "Up")) menu_item_select_jump(-1);
-	else if (!strcmp(ev->keyname, "Down")) menu_item_select_jump(1);
-	else if (!strcmp(ev->keyname, "Prior")) { menu_item_select_jump(-10); }
-	else if (!strcmp(ev->keyname, "Next")) { menu_item_select_jump(10); }
-	else if (!strcmp(ev->keyname, "Right"))  menu_item_select_go();
-	else if (!strcmp(ev->keyname, "Left"))
+	Eina_Bool result;
+	
+	switch (in)
+		{
+		case (RAGE_INPUT_UP):
+			{
+				menu_item_select_jump(-1);
+				result = RAGE_EVENT_BLOCK;
+				break;
+			}
+		case (RAGE_INPUT_DOWN):
+			{
+				menu_item_select_jump(1);
+				result = RAGE_EVENT_BLOCK;
+				break;
+			}
+		case (RAGE_INPUT_PREV):
+			{
+				menu_item_select_jump(-10);
+				result = RAGE_EVENT_BLOCK;
+				break;
+			}
+		case (RAGE_INPUT_NEXT):
+			{
+				menu_item_select_jump(10);
+				result = RAGE_EVENT_BLOCK;
+				break;
+			}
+		case (RAGE_INPUT_RIGHT):
+			{
+				menu_item_select_go();
+				result = RAGE_EVENT_BLOCK;
+				break;
+			}
+		case (RAGE_INPUT_LEFT):
 		{
 			if ((menus) && (menus->next)) menu_pop();
+			result = RAGE_EVENT_BLOCK;
+			break;
 		}
-	else if (!strcmp(ev->keyname, "Return"))  menu_item_select_go();
-	else if (!strcmp(ev->keyname, "p"))
-		{
-			/* tell the mini-vid to play */
+		case (RAGE_INPUT_OK):
+			{
+				menu_item_select_go();
+				result = RAGE_EVENT_BLOCK;
+				break;
+			}
+			
+		default:
+			{
+				result = RAGE_EVENT_CONTINUE;
+				break;
+			}
+	/* else if (!strcmp(ev->keyname, "p")) */
+	/* 	{ */
+	/* 		/\* tell the mini-vid to play *\/ */
+	/* 	} */
+	/* else if (!strcmp(ev->keyname, "s")) */
+	/* 	{ */
+	/* 		/\* tell the mini-vid to stop *\/ */
+	/* 	} */
 		}
-	else if (!strcmp(ev->keyname, "s"))
-		{
-			/* tell the mini-vid to stop */
-		}
+	
+	return result;
 }
 
 void

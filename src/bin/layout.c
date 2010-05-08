@@ -2,6 +2,8 @@
 
 static Evas_Object *o_layout = NULL;
 
+Evas_Object* layout_get() { return o_layout; }
+
 /* create the screen layout - edje defines it with swallow regions and anything
  else the theme wants to do */
 int

@@ -1,6 +1,7 @@
 #include "main.h"
 #include <Ecore_Getopt.h>
 #include "database.h"
+#include "input.h"
 
 typedef struct _Mode Mode;
 
@@ -25,7 +26,7 @@ static int          cmode      = NONE;
 static void main_usage(void);
 static int main_volume_add(void *data, int type, void *ev);
 static int main_volume_del(void *data, int type, void *ev);
-static void main_key_down(void *data, Evas *e, Evas_Object *obj, void *event_info);
+static Eina_Bool _main_event_cb(void* data, rage_input in);
 static void main_mouse_move(void *data, Evas *e, Evas_Object *obj, void *event_info);
 static int  main_signal_exit(void *data, int ev_type, void *ev);
 static void main_delete_request(Ecore_Evas *ee);
@@ -71,6 +72,10 @@ static const Ecore_Getopt options = {
 int
 main(int argc, char **argv)
 {
+	Input_Listener* main_listener = NULL;
+	Input_Listener* video_listener = NULL;
+	Input_Listener* dvb_listener = NULL;
+	Input_Listener* menu_listener = NULL;
    Evas_Object *o;
    int args, size;
    char *engine = NULL;
@@ -88,7 +93,7 @@ main(int argc, char **argv)
      ECORE_GETOPT_VALUE_BOOL(quit_option),
      ECORE_GETOPT_VALUE_NONE
    };
-
+	 
 	/* init ecore, eet, evas, edje etc. */
 	start_time = ecore_time_get();
 	eina_stringshare_init();
@@ -158,7 +163,11 @@ main(int argc, char **argv)
    evas_object_move(o, 0, 0);
    evas_object_resize(o, geometry.w, geometry.h);
    evas_object_show(o);
-   evas_object_event_callback_add(o, EVAS_CALLBACK_KEY_DOWN, main_key_down, NULL);
+	 
+	 rage_module_init();
+	 rage_module_load_all();
+	 main_listener = rage_input_listener_add("main", _main_event_cb, NULL);
+	 
    evas_object_event_callback_add(o, EVAS_CALLBACK_MOUSE_MOVE, main_mouse_move, NULL);
    evas_object_focus_set(o, 1);
    o_bg = o;
@@ -224,6 +233,10 @@ main(int argc, char **argv)
 	/* ... run the program core loop ... */
 	ecore_main_loop_begin();
 
+	rage_input_listener_del(main_listener);
+	main_listener = NULL;
+	rage_module_shutdown();
+	
 	ecore_evas_shutdown();
 	ecore_file_shutdown();
 	ecore_shutdown();
@@ -283,46 +296,45 @@ main_volume_del(void *data, int type, void *ev)
 	return 1;
 }
 
-static void
-main_key_down(void *data, Evas *e, Evas_Object *obj, void *event_info)
+static Eina_Bool
+_main_event_cb(void* data, rage_input in)
 {
-	Evas_Event_Key_Down *ev;
+	Eina_Bool result;
+	
+	switch(in)
+		{
+		case (RAGE_INPUT_QUIT):
+			{
+				eet_close(eet_config);
+				ecore_main_loop_quit();
+				result = RAGE_EVENT_BLOCK;
+				break;
+			}
+		case (RAGE_INPUT_FULLSCREEN):
+			{
+				if (!ecore_evas_fullscreen_get(ecore_evas))
+					{
+						ecore_evas_cursor_set(ecore_evas, "", 999, 0, 0);
+						ecore_evas_fullscreen_set(ecore_evas, 1);
+					}
+				else
+					{
+						ecore_evas_cursor_set(ecore_evas, NULL, 0, 0, 0);
+						ecore_evas_fullscreen_set(ecore_evas, 0);
+					}
+				result = RAGE_EVENT_BLOCK;
+				break;
+			}
+		default:
+			result = RAGE_EVENT_CONTINUE;
 
-	ev = (Evas_Event_Key_Down *)event_info;
-	if ((!strcmp(ev->keyname, "Escape"))
-			|| (!strcmp(ev->keyname, "q"))
-			|| (!strcmp(ev->keyname, "Q")))
-		{
-			eet_close(eet_config);
-			ecore_main_loop_quit();
+			/* else if(!strcmp(ev->keyname, "z")) */
+			/* 	{ */
+			/* 		option_zoom_mode_toggle(0); */
+			/* 	} */
 		}
-	else if (!strcmp(ev->keyname, "f"))
-		{
-			if (!ecore_evas_fullscreen_get(ecore_evas))
-				{
-					ecore_evas_cursor_set(ecore_evas, "", 999, 0, 0);
-					ecore_evas_fullscreen_set(ecore_evas, 1);
-				}
-			else
-				{
-					ecore_evas_cursor_set(ecore_evas, NULL, 0, 0, 0);
-					ecore_evas_fullscreen_set(ecore_evas, 0);
-				}
-		}
-	else if(!strcmp(ev->keyname, "z"))
-		{
-			option_zoom_mode_toggle(0);
-		}
-	else
-		{
-			switch (cmode)
-				{
-				case MENU: menu_key(ev); break;
-				case VIDEO: video_key(ev); break;
-				case DVB: dvb_key(ev); break;
-				default: break;
-				}
-		}
+	
+	return result;
 }
 
 static int
@@ -653,15 +665,15 @@ main_menu_video_library(void *data)
 	if (!vl)
 		{
 			vl = calloc(1, sizeof(Video_Lib));
-	vl->label = eina_stringshare_add("Library");
-	vl->path = eina_stringshare_add("");
+			vl->label = eina_stringshare_add("Library");
+			vl->path = eina_stringshare_add("");
 			menu_push("menu", vl->label, video_lib_free, vl);
 		}
 	else
 		{
 			vl = calloc(1, sizeof(Video_Lib));
-	vl->label = eina_stringshare_add(ecore_file_file_get(vli->path));
-	vl->path = eina_stringshare_add(vli->path);
+			vl->label = eina_stringshare_add(ecore_file_file_get(vli->path));
+			vl->path = eina_stringshare_add(vli->path);
 			menu_push("menu", vl->label, video_lib_free, vl);
 		}
 
@@ -1042,3 +1054,5 @@ main_get_config(void)
 
    eet_config = eet_open(buf, EET_FILE_MODE_READ_WRITE);
 }
+
+const char* rage_theme_get() { return theme; }

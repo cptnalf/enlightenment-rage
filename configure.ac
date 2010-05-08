@@ -90,12 +90,32 @@ PKG_CHECK_MODULES([ECORE], [
    ecore-evas
    ecore-ipc
    ecore-file])
+PKG_CHECK_MODULES([ELEMENTARY], 
+	[
+   elementary >= 0.6.0.063
+  ]
+)
 PKG_CHECK_MODULES([EMOTION], emotion)
 
 PKG_CHECK_MODULES([SQLITE3], sqlite3)
 
 my_libs="-lm "$dlopen_libs""
 AC_SUBST(my_libs)
+
+##################
+# Static Modules #
+##################
+
+AC_ARG_ENABLE(static_modules,
+  [AC_HELP_STRING([--disable-static-modules], [disable static modules.
+  [[default=enabled]]])],
+  [use_static_modules=$enableval],
+  [use_static_modules="yes"]
+)
+AM_CONDITIONAL([USE_STATIC_MODULES], test "x${use_static_modules}" = "xyes")
+if test "x$use_static_modules" = "xyes"; then
+  AC_DEFINE(USE_STATIC_MODULES, 1, [Static Modules])
+fi
 
 AC_OUTPUT([
 Makefile

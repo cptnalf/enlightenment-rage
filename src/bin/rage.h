@@ -1,3 +1,8 @@
+/* filename: rage.h
+ *  chiefengineer
+ *  Fri May 07 21:01:15 PDT 2010
+ */
+
 #include "e.h"
 
 #include "layout.h"
@@ -12,6 +17,7 @@
 #include "conf_options.h"
 #include "dvb.h"
 
+#define RAGE_NEW(s, n) (s *)calloc(n, sizeof(s));
 #define RAGE_FREE(p) do { free(p); p = NULL; } while (0)
 #define RAGE_OBJECT_DEL(obj) \
 	if (obj) {								 \
@@ -24,7 +30,14 @@
 	    eina_stringshare_del(string);  \
 			string = NULL;								 \
 		}
-	
+
+#define RAGE_EVENT_HANDLER_DEL(event_handler) \
+	if (event_handler)													\
+		{																					\
+	    ecore_event_handler_del(event_handler);	\
+			event_handler = NULL;										\
+		}
+
 extern Evas *evas;
 extern char *theme;
 extern char *config;
