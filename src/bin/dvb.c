@@ -1,5 +1,6 @@
 #include "main.h"
 #include "input.h"
+#include "gen_thumb.h"
 
 static Evas_Object *o_dvb = NULL;
 static Evas_Object *o_dvb_bg = NULL;
@@ -91,9 +92,10 @@ dvb_shutdown(void)
    if (!o_dvb_bg) return;
    if (!_hide_timer)
      {
-	menu_show();
-	background_show();
-	mini_pause_set(0);
+			 menu_show();
+			 background_show();
+			 mini_pause_set(0);
+			 gen_thumb_pause_set(0);
      }
    else
      {
@@ -396,6 +398,7 @@ dvb_menu_bg_hide_tmer_cb(void *data)
    background_hide();
    menu_hide();
    mini_pause_set(1);
+	 gen_thumb_pause_set(1);
    _hide_timer = NULL;
    return 0;
 }

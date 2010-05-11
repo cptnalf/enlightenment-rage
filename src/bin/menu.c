@@ -2,6 +2,7 @@
  * so the video screen can have its own menus
  */
 #include "main.h"
+#include "gen_thumb.h"
 
 typedef struct _Context   Context;
 typedef struct _Menu      Menu;
@@ -183,7 +184,9 @@ _menu_realize(Menu *m)
 						}
 					else
 						{
-							mi->ic = mini_add(mi->base, mi->icon);
+							//mi->ic = mini_add(mi->base, mi->icon);
+							/* this will only gen the thumb, not display it. */
+							mi->ic = gen_thumb_add(mi->base, mi->icon);
 							edje_object_part_swallow(mi->base, "item", mi->ic);
 							evas_object_show(mi->ic);
 						}

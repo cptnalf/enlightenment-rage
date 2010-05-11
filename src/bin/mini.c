@@ -8,9 +8,7 @@ struct _Mini
 	Evas_Object *o;
 	Evas_Object *o_image;
 	Evas_Object *o_parent;
-	Ecore_Exe *gen_exe;
 	Ecore_Timer *timer;
-	Ecore_Event_Handler *handler;
 	int done;
 	int frame;
 	int ok;
@@ -20,11 +18,9 @@ struct _Mini
 static void _mini_free(void *data, Evas *e, Evas_Object *obj, void *event_info);
 static void _mini_resize(void *data, Evas *e, Evas_Object *obj, void *event_info);
 static int _mini_timer(void *data);
-static int _mini_exe_exit(void *data, int ev_type, void *ev);
 
 static Ecore_Timer *timer = NULL;
 static Eina_List *minis = NULL;
-static int generators = 0;
 
 Evas_Object *
 mini_add(Evas_Object *parent, const char *source)
@@ -103,15 +99,6 @@ _mini_free(void *data, Evas *e, Evas_Object *obj, void *event_info)
 			ecore_timer_del(mini->timer);
 			mini->timer = NULL;
 		}
-	if (mini->gen_exe)
-		{
-			ecore_exe_kill(mini->gen_exe);
-			ecore_exe_free(mini->gen_exe);
-			if (mini->handler) ecore_event_handler_del(mini->handler);
-			generators--;
-			mini->gen_exe = NULL;
-			mini->handler = NULL;
-		}
 	free(mini);
 	minis = eina_list_remove(minis, mini);
 	if (!minis)
@@ -131,28 +118,6 @@ _mini_resize(void *data, Evas *e, Evas_Object *obj, void *event_info)
    
 	evas_object_geometry_get(obj, NULL, NULL, &w, &h);
 	evas_object_image_fill_set(obj, 0, 0, w, h);
-}
-
-static int
-_mini_overtime_timer(void *data)
-{
-	Mini *mini;
-
-	mini = data;
-	printf("OVER TIME %s\n", mini->file);
-	if (mini->gen_exe)
-		{
-			printf("2 OVER TIME %s\n", mini->file);
-			ecore_exe_kill(mini->gen_exe);
-			ecore_exe_free(mini->gen_exe);
-			if (mini->handler) ecore_event_handler_del(mini->handler);
-			mini->done = 0;
-			generators--;
-			mini->gen_exe = NULL;
-			mini->handler = NULL;
-		}
-	mini->timer = NULL;
-	return 0;
 }
 
 static int
@@ -193,18 +158,9 @@ _mini_timer(void *data)
 				}
 			if (iw == 0)
 				{
-					if ((mini->frame == 0) && (!mini->gen_exe) && (generators == 0) &&
-							(mini->done == 0))
+					if ((mini->frame == 0) &&	(mini->done == 0))
 						{
-							edje_object_signal_emit(mini->o, "generate", "begin");
-							edje_object_signal_emit(mini->o_parent, "generate", "begin");
-							snprintf(buf, sizeof(buf), "nice -n 5 %s/rage_thumb \"%s\" \"%s\" -fps 10 -og 480x480",
-											 PACKAGE_BIN_DIR, mini->source, mini->file);
-							printf("EXEC: %s\n", buf);
-							mini->gen_exe = ecore_exe_run(buf, mini);
-							mini->handler = ecore_event_handler_add(ECORE_EXE_EVENT_DEL, _mini_exe_exit, mini);
-							mini->timer = ecore_timer_add(240.0, _mini_overtime_timer, mini);
-							generators++;
+							//printf("should EXEC: %s\n", buf);
 						}
 					else
 						{
@@ -231,28 +187,3 @@ _mini_timer(void *data)
 	return 1;
 }
 
-static int
-_mini_exe_exit(void *data, int ev_type, void *ev)
-{
-	Ecore_Exe_Event_Del *e;
-	Mini *mini;
-   
-	e = ev;
-	mini = data;
-	if (mini->gen_exe == e->exe)
-		{
-			edje_object_signal_emit(mini->o, "generate", "done");
-			edje_object_signal_emit(mini->o_parent, "generate", "done");
-			if (mini->handler) ecore_event_handler_del(mini->handler);
-			mini->gen_exe = NULL;
-			mini->handler = NULL;
-			mini->done++;
-			generators--;
-			if (mini->timer)
-				{
-					ecore_timer_del(mini->timer);
-					mini->timer = NULL;
-				}
-		}
-	return 1;
-}

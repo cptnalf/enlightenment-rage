@@ -1,4 +1,5 @@
 #include "main.h"
+#include "gen_thumb.h"
 
 static Evas_Object *o_video = NULL;
 static Evas_Object *o_video_bg = NULL;
@@ -88,6 +89,7 @@ video_shutdown(void)
 			menu_show();
 			background_show();
 			mini_pause_set(0);
+			gen_thumb_pause_set(0);
 		}
 	else
 		{
@@ -477,6 +479,7 @@ video_menu_bg_hide_tmer_cb(void *data)
 	background_hide();
 	menu_hide();
 	mini_pause_set(1);
+	gen_thumb_pause_set(1);
 	_hide_timer = NULL;
 	
 	{
