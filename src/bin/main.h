@@ -5,12 +5,10 @@
 #include "volume.h"
 #include "status.h"
 #include "menu.h"
-#include "video.h"
 #include "mini.h"
 #include "minivid.h"
 #include "sha1.h"
 #include "conf_options.h"
-#include "dvb.h"
 
 #define RAGE_FREE(p) do { free(p); p = NULL; } while (0)
 #define RAGE_OBJECT_DEL(obj) \

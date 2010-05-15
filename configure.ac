@@ -12,8 +12,11 @@ AC_C_BIGENDIAN
 AC_ISC_POSIX
 AC_PROG_CC
 AM_PROG_CC_STDC
+AM_PROG_CC_C_O
+
 AC_HEADER_STDC
 AC_C_CONST
+
 AM_ENABLE_SHARED
 AM_PROG_LIBTOOL
 
@@ -98,6 +101,13 @@ PKG_CHECK_MODULES([ELEMENTARY],
 PKG_CHECK_MODULES([EMOTION], emotion)
 
 PKG_CHECK_MODULES([SQLITE3], sqlite3)
+
+if test -z "$HUMOR"; then
+AC_CHECK_LIB(Kenny, life_signs, , [
+  echo "  Oh my god, they killed Kenny!  You bastards!"
+	AC_DEFINE(HAVE_HUMOR, 1, [Defined if user has a sense of humor.])
+])
+fi
 
 my_libs="-lm "$dlopen_libs""
 AC_SUBST(my_libs)

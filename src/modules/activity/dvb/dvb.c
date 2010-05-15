@@ -1,6 +1,10 @@
 #include "main.h"
 #include "input.h"
 #include "gen_thumb.h"
+#include "video_preview.h"
+
+Eina_Bool
+dvb_event_cb(void* data, rage_input in);
 
 static Evas_Object *o_dvb = NULL;
 static Evas_Object *o_dvb_bg = NULL;
@@ -581,4 +585,42 @@ dvb_stopped_job_cb(void *data)
 {
    main_mode_pop();
    dvb_shutdown();
+}
+
+void
+main_menu_tv(void *data)
+{
+	main_mode_push(DVB);
+	video_preview_destroy();
+
+	dvb_init("xine", "", "video");
+//   system("tvtime -m -n PAL -f custom");
+/*
+   system("xine -f --no-gui "
+          "dvb://0 "
+          "dvb://1 "
+          "dvb://2 "
+          "dvb://3 "
+          "dvb://4 "
+          "dvb://5 "
+          "dvb://6 "
+          "dvb://7 "
+          "dvb://8 "
+          "dvb://9 "
+          "dvb://10 "
+          "dvb://11 "
+          "dvb://12 "
+          "dvb://13 "
+          "dvb://14 "
+          "dvb://15 "
+          "dvb://16 "
+          "dvb://17 "
+          "dvb://18 "
+          "dvb://19 "
+          "dvb://20 "
+          "dvb://21 "
+          "dvb://22 "
+          "dvb://23 "
+          );
+ */
 }

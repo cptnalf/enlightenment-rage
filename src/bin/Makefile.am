@@ -8,28 +8,7 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src/bin \
 
 bin_PROGRAMS = rage rage_thumb raged
 
-# ACTIVITES_SRCS= \
-# $(top_srcdir)/src/modules/activities/dvb.c \
-# $(top_srcdir)/src/modules/activities/dvb.h \
-# $(top_srcdir)/src/modules/activities/video.c \
-# $(top_srcdir)/src/modules/activities/video.h
-
-INPUT_SRCS= \
-$(top_srcdir)/src/modules/input/kbd.c \
-$(top_srcdir)/src/modules/input/basekeymap.h \
-$(top_srcdir)/src/modules/input/videokeymap.h
-
-# VFS_SRCS= \
-# $(top_srcdir)/src/modules/vfs/database.c \
-# $(top_srcdir)/src/modules/vfs/database.h \
-# $(top_srcdir)/src/modules/vfs/vfs_db.c
-
-#$(ACTIVITIES_SRCS) \
-#$(VFS_SRCS) \
-#
-
 rage_SOURCES = \
-$(INPUT_SRCS) \
 main.c \
 main.h \
 layout.c \
@@ -70,14 +49,20 @@ input.h \
 input.c \
 database.c \
 database.h \
-video.c \
-video.h \
-dvb.c \
-dvb.h \
 gen_thumb.c \
 gen_thumb.h \
 video_lib.c \
 video_lib.h
+
+include $(top_srcdir)/src/modules/input/files.mak
+include $(top_srcdir)/src/modules/activity/dvb/files.mak
+include $(top_srcdir)/src/modules/activity/videos/files.mak
+include $(top_srcdir)/src/modules/activity/config/files.mak
+
+rage_SOURCES += $(INPUT_SRCS)
+rage_SOURCES += $(VIDEO_SRCS)
+rage_SOURCES += $(DVB_SRCS)
+rage_SOURCES += $(CONFIG_SRCS)
 
 rage_LDADD = @my_libs@ \
 @EVAS_LIBS@ @ECORE_LIBS@ @EDJE_LIBS@ @EMOTION_LIBS@ @ELEMENTARY_LIBS@ \

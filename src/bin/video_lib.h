@@ -6,6 +6,8 @@
 #ifndef _VIDEO_LIB_H
 #define _VIDEO_LIB_H
 
+#include "volume.h"
+
 typedef struct _Video_Lib      Video_Lib;
 typedef struct _Video_Lib_Item Video_Lib_Item;
 

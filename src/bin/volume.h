@@ -1,4 +1,7 @@
 
+#ifndef VOLUME_H
+#define VOLUME_H
+
 typedef struct _Volume_Item Volume_Item;
 
 struct _Volume_Item
@@ -38,3 +41,5 @@ extern int VOLUME_TYPE_DEL;
 extern int VOLUME_SCAN_START;
 extern int VOLUME_SCAN_STOP;
 extern int VOLUME_SCAN_GO;
+
+#endif

@@ -4,6 +4,9 @@
 #include "input.h"
 #include "video_lib.h"
 
+extern void main_menu_video_view(void *data);
+extern void main_menu_dvd_watch(void *data);
+
 typedef struct _Mode Mode;
 
 struct _Mode
@@ -17,9 +20,9 @@ char        *config = NULL;
 int          zoom_mode=1; /* by default stretch the video to fill my screen */
 Eet_File    *eet_config = NULL;
 Ecore_Timer* mouse_timeout = NULL;
+Ecore_Evas  *ecore_evas = NULL;
 
 static double       start_time = 0.0;
-static Ecore_Evas  *ecore_evas = NULL;
 static Evas_Object *o_bg       = NULL;
 static Eina_List   *modes      = NULL;
 static int          cmode      = NONE;
@@ -32,14 +35,13 @@ static void main_mouse_move(void *data, Evas *e, Evas_Object *obj, void *event_i
 static int  main_signal_exit(void *data, int ev_type, void *ev);
 static void main_delete_request(Ecore_Evas *ee);
 static void main_resize(Ecore_Evas *ee);
-static void main_menu_config(void *data);
+extern void main_menu_config(void *data);
 static void main_menu_video(void *data);
 static void main_menu_dvd(void *data);
 static void main_menu_audio(void *data);
 static void main_menu_photo(void *data);
 static void main_menu_scan(void *data);
 static void main_menu_tv(void *data);
-static void option_zoom_mode_toggle(void* data);
 static int main_menu_video_history_track(void* data);
 static void main_get_config(void);
 
@@ -361,43 +363,6 @@ main_resize(Ecore_Evas *ee)
 	layout_resize();
 }
 
-static void
-option_zoom_mode_toggle(void* data)
-{
-	zoom_mode = ! zoom_mode;
-}
-
-static void
-main_menu_config(void *data)
-{
-	char option1[1024];
-	
-   menu_push("menu", "Settings", NULL, NULL);
-
-	snprintf(option1, sizeof(option1), "Zoom mode = %s", (zoom_mode ? "on" : "off"));
-	menu_item_add("icon/config", option1,
-								option1, NULL,
-								option_zoom_mode_toggle, NULL, NULL, NULL, NULL);
-	menu_item_add("icon/fullscreen", "Fullscreen",
-								 "Fullscreen On/Off", NULL,
-								 config_option_fullscreen, ecore_evas, NULL, NULL, NULL);
-   menu_item_add("icon/themes", "Themes",
-								 "Select your theme", NULL,
-								 config_option_themes, NULL, NULL, NULL, NULL);
-   menu_item_add("icon/modes", "Modes",
-								 "Change the engine Rage uses", NULL,
-								 config_option_modes, ecore_evas, NULL, NULL, NULL);
-   menu_item_add("icon/volumes", "Volumes",
-								 "Edit your Volumes", NULL,
-								 config_option_volumes, NULL, NULL, NULL, NULL);
-   menu_item_enabled_set("Settings", "Fullscreen", 1);
-   menu_item_enabled_set("Settings", "Themes", 1);
-   menu_item_enabled_set("Settings", "Modes", 1);
-   menu_item_enabled_set("Settings", "Volumes", 1);
-   menu_go();
-   menu_item_select("Fullscreen");
-	
-}
 
 static int
 genre_item_sort(const void* d1, const void* d2)
@@ -484,23 +449,6 @@ list_video_genres(const char* genre)
 	return genres;
 }
 
-static Ecore_Timer *over_delay_timer = NULL;
-static Evas_Object *over_video = NULL;
-static Ecore_Timer* file_played_timer = NULL;
-
-static int
-main_menu_video_over_delay(void *data)
-{
-	Video_Lib_Item *vli;
-
-	vli = data;
-	if (over_video) minivid_del(over_video);
-	over_video = minivid_add("xine", vli->vi->path, 1);
-	layout_swallow("video_preview", over_video);
-	over_delay_timer = NULL;
-	return 0;
-}
-
 static void
 main_menu_video_over(void *data)
 {
@@ -510,65 +458,11 @@ main_menu_video_over(void *data)
 	
 	video_preview_set(vli->vi);
 	video_preview_activate();
-	/*
-	if (over_delay_timer) ecore_timer_del(over_delay_timer);
-	over_delay_timer = ecore_timer_add(0.5, main_menu_video_over_delay, vli);
-	*/
-}
-
-static int
-main_menu_video_history_track(void* data)
-{
-	Database* db;
-	Volume_Item* vi;
-	
-	/* kill the timer. */
-	if (file_played_timer) { ecore_timer_del(file_played_timer); }
-	
-	vi =  data;
-	db = database_new();
-	database_video_file_update(db, vi);
-	database_free(db);
-}
-
-static void
-main_menu_video_view(void *data)
-{
-	Video_Lib_Item *vli;
-	
-	if (file_played_timer)
-		{
-			/* reset the timer... */
-			ecore_timer_del(file_played_timer);
-			file_played_timer = NULL;
-		}
-	
-	vli = data;
-	if (over_delay_timer)
-		{
-			ecore_timer_del(over_delay_timer);
-			over_delay_timer = NULL;
-		}
-	main_mode_push(VIDEO);
-	video_preview_destroy();
-	
-	file_played_timer = ecore_timer_add(20.0, main_menu_video_history_track, vli->vi);
-									
-	video_init("xine", vli->vi->path, "video");
 }
 
 static void
 main_menu_video_out(void *data)
 {
-	Video_Lib_Item *vli;
-
-	vli = data;
-	if (over_delay_timer)
-		{
-			ecore_timer_del(over_delay_timer);
-			over_delay_timer = NULL;
-		}
-	
 	video_preview_deactivate();
 }
 
@@ -835,26 +729,6 @@ static void main_menu_movies_library(void* data)
 }
 
 static void
-main_menu_dvd_watch(void *data)
-{
-	Video_Lib_Item *vli;
-
-	vli = data;
-	if (over_delay_timer)
-		{
-			ecore_timer_del(over_delay_timer);
-			over_delay_timer = NULL;
-		}
-	main_mode_push(VIDEO);
-	if (over_video)
-		{
-			minivid_del(over_video);
-			over_video = NULL;
-		}
-	video_init("xine", "dvd://", "video");
-}
-
-static void
 main_menu_video(void *data)
 {
 	menu_push("menu", "Video", NULL, NULL);
@@ -893,26 +767,6 @@ main_menu_video(void *data)
 }
 
 static void
-main_menu_dvd(void *data)
-{
-	menu_push("menu", "DVD", NULL, NULL);
-	menu_item_add("icon/resume", "Resume",
-								"Resume DVD from last play", NULL,
-								NULL, NULL, NULL, NULL, NULL);
-	menu_item_add("icon/dvd", "Rip",
-								"Rip DVD to Disk for storage", NULL,
-								NULL, NULL, NULL, NULL, NULL);
-	menu_item_add("icon/dvd", "Watch",
-								"Watch your DVD", NULL,
-								main_menu_dvd_watch, NULL, NULL, NULL, NULL);
-	menu_item_enabled_set("DVD", "Resume", 0);
-	menu_item_enabled_set("DVD", "Rip", 0);
-	menu_item_enabled_set("DVD", "Watch", 1);
-	menu_go();
-	menu_item_select("Watch");
-}
-
-static void
 main_menu_audio(void *data)
 {
 	menu_push("menu", "Audio", NULL, NULL);
@@ -938,52 +792,6 @@ static void
 main_menu_scan(void *data)
 {
 	volume_update();
-}
-
-static void
-main_menu_tv(void *data)
-{
-   if (over_delay_timer)
-     {
-	ecore_timer_del(over_delay_timer);
-	over_delay_timer = NULL;
-     }
-   main_mode_push(DVB);
-   if (over_video)
-     {
-	minivid_del(over_video);
-	over_video = NULL;
-     }
-   dvb_init("xine", "", "video");
-//   system("tvtime -m -n PAL -f custom");
-/*
-   system("xine -f --no-gui "
-          "dvb://0 "
-          "dvb://1 "
-          "dvb://2 "
-          "dvb://3 "
-          "dvb://4 "
-          "dvb://5 "
-          "dvb://6 "
-          "dvb://7 "
-          "dvb://8 "
-          "dvb://9 "
-          "dvb://10 "
-          "dvb://11 "
-          "dvb://12 "
-          "dvb://13 "
-          "dvb://14 "
-          "dvb://15 "
-          "dvb://16 "
-          "dvb://17 "
-          "dvb://18 "
-          "dvb://19 "
-          "dvb://20 "
-          "dvb://21 "
-          "dvb://22 "
-          "dvb://23 "
-          );
- */
 }
 
 int
