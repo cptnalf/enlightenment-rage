@@ -38,7 +38,7 @@ extern void* database_iterator_next(DBIterator* it);
 extern void* database_iterator_get(DBIterator* it);
 extern int database_iterator_move_next(DBIterator* it);
 extern void database_iterator_free(DBIterator* it);
-extern DBIterator* database_video_genres_get(Database* db);
+extern DBIterator* database_video_genres_get(Database* db, const char* genre);
 extern void database_iterator_free(DBIterator* it);
 extern DBIterator* database_video_files_get(Database* db, const char* query_part2);
 extern DBIterator* database_video_files_genre_search(Database* db, const char* genre);

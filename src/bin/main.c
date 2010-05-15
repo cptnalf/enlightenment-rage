@@ -2,6 +2,7 @@
 #include <Ecore_Getopt.h>
 #include "database.h"
 #include "input.h"
+#include "video_lib.h"
 
 typedef struct _Mode Mode;
 
@@ -377,19 +378,18 @@ main_menu_config(void *data)
 	menu_item_add("icon/config", option1,
 								option1, NULL,
 								option_zoom_mode_toggle, NULL, NULL, NULL, NULL);
-
-   menu_item_add("icon/fullscreen", "Fullscreen",
-		  "Fullscreen On/Off", NULL,
-		  config_option_fullscreen, ecore_evas, NULL, NULL, NULL);
+	menu_item_add("icon/fullscreen", "Fullscreen",
+								 "Fullscreen On/Off", NULL,
+								 config_option_fullscreen, ecore_evas, NULL, NULL, NULL);
    menu_item_add("icon/themes", "Themes",
-		  "Select your theme", NULL,
-		  config_option_themes, NULL, NULL, NULL, NULL);
+								 "Select your theme", NULL,
+								 config_option_themes, NULL, NULL, NULL, NULL);
    menu_item_add("icon/modes", "Modes",
-		  "Change the engine Rage uses", NULL,
-		  config_option_modes, ecore_evas, NULL, NULL, NULL);
+								 "Change the engine Rage uses", NULL,
+								 config_option_modes, ecore_evas, NULL, NULL, NULL);
    menu_item_add("icon/volumes", "Volumes",
-		  "Edit your Volumes", NULL,
-		  config_option_volumes, NULL, NULL, NULL, NULL);
+								 "Edit your Volumes", NULL,
+								 config_option_volumes, NULL, NULL, NULL, NULL);
    menu_item_enabled_set("Settings", "Fullscreen", 1);
    menu_item_enabled_set("Settings", "Themes", 1);
    menu_item_enabled_set("Settings", "Modes", 1);
@@ -446,7 +446,7 @@ list_string_free(Eina_List *list)
 }
 
 static Eina_List *
-list_video_genres(void)
+list_video_genres(const char* genre)
 {
 	const Eina_List *l;
 	Eina_List *genres = NULL;
@@ -457,7 +457,7 @@ list_video_genres(void)
 	db = database_new();
 	
 	/* get a list of genre strings */
-	it = database_video_genres_get(db);
+	it = database_video_genres_get(db, genre);
 	
 	while(ge = database_iterator_next(it))
 		{
@@ -482,45 +482,6 @@ list_video_genres(void)
      }
 */
 	return genres;
-}
-
-typedef struct _Video_Lib      Video_Lib;
-typedef struct _Video_Lib_Item Video_Lib_Item;
-
-struct _Video_Lib
-{
-	const char *label;
-	const char *path;
-};
-
-struct _Video_Lib_Item
-{
-	const char  *label;
-	const char  *path;
-	Volume_Item *vi;
-};
-
-static void
-video_lib_free(void *data)
-{
-	Video_Lib *vl;
-
-   vl = data;
-   eina_stringshare_del(vl->label);
-   eina_stringshare_del(vl->path);
-   free(vl);
-}
-
-static void
-video_lib_item_free(void *data)
-{
-	Video_Lib_Item *vli;
-
-	vli = data;
-   eina_stringshare_del(vli->label);
-   eina_stringshare_del(vli->path);
-	volume_item_free(vli->vi);
-	free(vli);
 }
 
 static Ecore_Timer *over_delay_timer = NULL;
@@ -627,10 +588,7 @@ const char* main_menu_items_add(DBIterator* it, Video_Lib* vl)
 			//printf("%s=%s\n", vi->rpath, vi->name);
 			/* construct the video lib item from the volume item. */			
 			buf[0] = 0;
-			vli = calloc(1, sizeof(Video_Lib_Item));
-			vli->label = eina_stringshare_add(vi->name);
-			vli->path = eina_stringshare_add(vi->rpath);
-			vli->vi = vi;
+			vli = video_lib_item_new_withvolume(vi);
 			
 			//			    snprintf(buf, sizeof(buf), "3:00:00");
 
@@ -648,37 +606,20 @@ const char* main_menu_items_add(DBIterator* it, Video_Lib* vl)
 			if (!sel) sel = vli->label;
 		}
 	
-	database_iterator_free(it);
 	return sel;
 }
 
-static void
-main_menu_video_library(void *data)
+
+static void main_menu_video_library(void *data);
+
+static void _menu_library_create(Video_Lib* vl)
 {
    const Eina_List *l;
    Eina_List *genres = NULL, *glist = NULL;
-	Video_Lib *vl;
-	Video_Lib_Item *vli;
-
-	vli = data;
-	vl = (Video_Lib *)menu_data_get();
-	if (!vl)
-		{
-			vl = calloc(1, sizeof(Video_Lib));
-			vl->label = eina_stringshare_add("Library");
-			vl->path = eina_stringshare_add("");
-			menu_push("menu", vl->label, video_lib_free, vl);
-		}
-	else
-		{
-			vl = calloc(1, sizeof(Video_Lib));
-			vl->label = eina_stringshare_add(ecore_file_file_get(vli->path));
-			vl->path = eina_stringshare_add(vli->path);
-			menu_push("menu", vl->label, video_lib_free, vl);
-		}
+	 Video_Lib_Item* vli;
 
 	/* determine toplevel genres */
-	genres = list_video_genres();
+	genres = list_video_genres(vl->path);
 	if (genres)
 		{
 			int vlpn;
@@ -735,9 +676,9 @@ main_menu_video_library(void *data)
 								snprintf(buf, sizeof(buf), "%s/%s", vl->path, ge->label);
 							else
 								snprintf(buf, sizeof(buf), "%s", ge->label);
-							vli = calloc(1, sizeof(Video_Lib_Item));
-							vli->label = eina_stringshare_add(ge->label);
-							vli->path = eina_stringshare_add(buf);
+							
+							vli = video_lib_item_new(ge->label, buf);
+							
 							snprintf(buf, sizeof(buf), "%i", ge->count);
 							menu_item_add("icon/video_folder", vli->label,
 														"", buf,
@@ -777,56 +718,57 @@ main_menu_video_library(void *data)
 		}
 }
 
+static void
+main_menu_video_library(void *data)
+{
+	Video_Lib *vl;
+	Video_Lib_Item *vli;
+
+	vli = data;
+	vl = (Video_Lib *)menu_data_get();
+	if (!vl) { vl = video_lib_new("Library", ""); }
+	else 
+		{
+			const char* file_path = ecore_file_file_get(vli->path);
+			vl = video_lib_new(file_path, vli->path);
+		}
+	
+	menu_push("menu", vl->label, video_lib_free, vl);
+	
+	_menu_library_create(vl);
+}
+
 static void main_menu_video_favorites(void* data)
 {
 	const Eina_List *l;
 	Eina_List *genres = NULL, *glist = NULL;
 	Video_Lib *vl;
 	Video_Lib_Item *vli;
-
+	Database* db;
+	DBIterator* it;
+	Volume_Item* vi;
+	const char* sel;
+	
 	vli = data;
 	vl = (Video_Lib *)menu_data_get();
+
+	if (!vl)
+		{
+			vl = video_lib_new("Favorites", "");
+			menu_push("menu", vl->label, video_lib_free, vl);
+		}
 	
-	{
-		Database* db;
-		DBIterator* it;
-		Volume_Item* vi;
-		const char* sel;
-		
-		db = database_new();
-		it = database_video_favorites_get(db);
-		
-		/* the next fx gives me a pointer... */
-		while( (vi = database_iterator_next(it)))
-			{
-				char buf[1024];
-				
-				/* construct the video lib item from the volume item. */
-				buf[0] = 0;
-				vli = calloc(1, sizeof(Video_Lib_Item));
-				vli->label = eina_stringshare_add(vi->name);
-				vli->path = eina_stringshare_add(vi->rpath);
-				vli->vi = vi;
-				
-				/* make the menu item,
-				 * this is a normal video file, so it gets the standard handlers.
-				 */
-				menu_item_add(vli->path, vli->label,
-											"", buf,
-											main_menu_video_view, vli,
-											video_lib_item_free,
-											main_menu_video_over,
-											main_menu_video_out);
-				menu_item_enabled_set(vl->label, vli->label, 1);
-				if (!sel) { sel = vli->label; }
-			}
-		
-		menu_go();
-		if (sel) { menu_item_select(sel); }
-		
-		database_iterator_free(it);
-		database_free(db);
-	}
+	db = database_new();
+	it = database_video_favorites_get(db);
+	
+	/* the next fx gives me a pointer... */
+	main_menu_items_add(it, vl);
+	
+	menu_go();
+	if (sel) { menu_item_select(sel); }
+	
+	database_iterator_free(it);
+	database_free(db);
 }
 
 /** display the recent video files.
@@ -844,9 +786,7 @@ static void main_menu_video_recents(void* data)
 
 	if (!vl)
 		{
-			vl = calloc(1, sizeof(Video_Lib));
-			vl->label = eina_stringshare_add("Recents");
-			vl->path = eina_stringshare_add("");
+			vl = video_lib_new("Recents", "");
 			menu_push("menu", vl->label, video_lib_free, vl);
 		}
 	
@@ -855,9 +795,43 @@ static void main_menu_video_recents(void* data)
 	
 	sel = main_menu_items_add(it, vl);
 	menu_go();
-	menu_item_select(sel);
+	if (sel) { menu_item_select(sel); }
 	
 	database_free(db);
+}
+
+static void main_menu_anime_library(void* data)
+{
+	Video_Lib* vl;
+	Video_Lib_Item* vli;
+	
+	vli = data;
+	vl = (Video_Lib*)menu_data_get();
+	
+	if (!vl)
+		{
+			vl = video_lib_new("anime", "anime");
+			menu_push("menu", vl->label, video_lib_free, vl);
+		}
+	
+	_menu_library_create(vl);
+}
+
+static void main_menu_movies_library(void* data)
+{
+	Video_Lib* vl;
+	Video_Lib_Item* vli;
+	
+	vli = data;
+	vl = (Video_Lib*)menu_data_get();
+	
+	if (!vl)
+		{
+			vl = video_lib_new("movies", "movies");
+			menu_push("menu", vl->label, video_lib_free, vl);
+		}
+	
+	_menu_library_create(vl);
 }
 
 static void
@@ -890,17 +864,29 @@ main_menu_video(void *data)
 	menu_item_add("icon/favorites", "Favorites",
 								"Favorite Videos", NULL,
 								main_menu_video_favorites, NULL, NULL, NULL, NULL);
+	menu_item_enabled_set("Video", "Favorites", 1);
+
 	menu_item_add("icon/history_folder", "Recents",
 								"files recently played", NULL,
 								main_menu_video_recents, NULL, NULL, NULL, NULL);
+	menu_item_enabled_set("Video", "Recents", 1);
+	
+	menu_item_add("icon/library", "anime",
+								"japanese animated shows/movies", NULL,
+								main_menu_anime_library, NULL, NULL, NULL, NULL);
+	menu_item_enabled_set("Video", "anime", 1);
+	
+	menu_item_add("icon/library", "movies",  
+								"movies", NULL, 
+								main_menu_movies_library, NULL, NULL, NULL, NULL);
+	menu_item_enabled_set("Video", "movies", 1);
+	
 	menu_item_add("icon/library", "Library",
 								"Browse all of your Videos", NULL,
 								main_menu_video_library, NULL, NULL, NULL, NULL);
+	menu_item_enabled_set("Video", "Library", 1);
 	
 /* 	menu_item_enabled_set("Video", "Resume", 0); */
-	menu_item_enabled_set("Video", "Favorites", 1);
-	menu_item_enabled_set("Video", "Recently Played Files", 1);
-	menu_item_enabled_set("Video", "Library", 1);
 
 	menu_go();
 	menu_item_select("Library");

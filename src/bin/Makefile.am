@@ -75,7 +75,9 @@ video.h \
 dvb.c \
 dvb.h \
 gen_thumb.c \
-gen_thumb.h
+gen_thumb.h \
+video_lib.c \
+video_lib.h
 
 rage_LDADD = @my_libs@ \
 @EVAS_LIBS@ @ECORE_LIBS@ @EDJE_LIBS@ @EMOTION_LIBS@ @ELEMENTARY_LIBS@ \

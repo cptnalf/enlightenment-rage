@@ -269,20 +269,57 @@ static void* _genre_next(DBIterator* it)
 }
 
 /** get a list of the genres in the database.
+ *  this excludes movies, and anime.
  */
-DBIterator* database_video_genres_get(Database* db)
+DBIterator* database_video_genres_get(Database* db, const char* genre)
 {
 	DBIterator* it = 0;
 	char** tbl_results = 0;
 	int rows, cols;
 	int result;
 	char* error_msg;
-	char* query = 
-		"SELECT genre, count(path) "
-		"FROM video_files "
-		"GROUP BY genre "
-		"ORDER BY genre";
+	char* query = NULL;
 	
+	if (genre)
+		{
+			if (genre[0] != 0)
+				{
+					/* not an empty string. */
+					if (!strncmp("anime", genre, 5))
+						{
+							query = 
+								"SELECT genre, count(path) "
+								"FROM video_files "
+								"WHERE genre like 'anime%' "
+								"GROUP BY genre "
+								"ORDER BY genre";
+						}
+					else if (!strncmp("movies", genre, 6))
+						{
+							query = 
+								"SELECT genre, count(path) "
+								"FROM video_files "
+								" WHERE genre like 'movies%' "
+								"GROUP BY genre "
+								"ORDER BY genre";
+						}
+				}
+		}
+	
+	if (! query)
+		{
+			query = 
+				"SELECT genre, count(path) "
+				"FROM video_files "
+				"WHERE "
+				"   genre <> 'anime' "
+				"    AND genre not like 'anime/%' "
+				"    AND genre <> 'movies' "
+				"    AND genre not like 'movies/%' "
+				"GROUP BY genre "
+				"ORDER BY genre";
+		}
+
 	result = sqlite3_get_table(db->db, query, &tbl_results, &rows, &cols, &error_msg);
 	if (SQLITE_OK == result)
 		{
