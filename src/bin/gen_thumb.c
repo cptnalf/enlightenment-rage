@@ -180,13 +180,23 @@ _gen_thumb_timer(void *data)
 					if (ecore_file_size(thumb->file))
 						thumb->file_mod = 0;
 				}
+			
+			/* if the thumb was created after the source,
+			 * verify it's size.
+			 * if it's less than or equal to zero, force a regen.
+			 */
+			if (thumb->file_mod >= thumb->source_mod)
+				{ 
+					if (0 >= ecore_file_size(thumb->file)) { thumb->file_mod = 0; } 
+				}
+			
 			if (thumb->file_mod < thumb->source_mod)
 				iw = 0;
 			else
 				{
-					/* grab real res. */
 					iw = 1;
 				}
+			
 			if (iw == 0)
 				{
 					if ((thumb->frame == 0) 
