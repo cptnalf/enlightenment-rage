@@ -834,8 +834,16 @@ collections {
    ICON("icon/photo", "photo.png");
    ICON("icon/update", "update.png");
    ICON("icon/book", "book.png");
-   ICON("icon/favorites", "favorites.png");
+//   ICON("icon/favorites", "favorites.png");
    ICON("icon/resume", "resume.png");
    ICON("icon/bug", "bug.png");
    ICON("icon/genre", "genre.png");
+   //   ICON("icon/videos", "videos.png");
+
+
+   ICON("icon/favorites", "folder_favorites.png");
+   ICON("icon/video_file", "video_file.png");
+   ICON("icon/video_folder", "video_folder.png");
+   ICON("icon/history_folder", "history_folder.png");
+   ICON("icon/library", "library.png");
 }

@@ -196,7 +196,7 @@ main(int argc, char **argv)
 	menu_item_add("icon/tv", "TV",
 								"Scan all media again and update", NULL,
 								main_menu_tv, NULL, NULL, NULL, NULL);
-	menu_item_add("icon/video", "Videos",
+	menu_item_add("icon/video_file", "Videos",
 								"Films, Movies and other video footage", NULL,
 								main_menu_video, NULL, NULL, NULL, NULL);
 	menu_item_add("icon/dvd", "DVD",
@@ -739,7 +739,7 @@ main_menu_video_library(void *data)
 							vli->label = eina_stringshare_add(ge->label);
 							vli->path = eina_stringshare_add(buf);
 							snprintf(buf, sizeof(buf), "%i", ge->count);
-							menu_item_add("icon/genre", vli->label,
+							menu_item_add("icon/video_folder", vli->label,
 														"", buf,
 														main_menu_video_library, vli,
 														video_lib_item_free,
@@ -890,10 +890,10 @@ main_menu_video(void *data)
 	menu_item_add("icon/favorites", "Favorites",
 								"Favorite Videos", NULL,
 								main_menu_video_favorites, NULL, NULL, NULL, NULL);
-	menu_item_add("icon/favorites", "Recents",
+	menu_item_add("icon/history_folder", "Recents",
 								"files recently played", NULL,
 								main_menu_video_recents, NULL, NULL, NULL, NULL);
-	menu_item_add("icon/book", "Library",
+	menu_item_add("icon/library", "Library",
 								"Browse all of your Videos", NULL,
 								main_menu_video_library, NULL, NULL, NULL, NULL);
 	
