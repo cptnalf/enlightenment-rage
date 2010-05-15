@@ -1,4 +1,6 @@
 
+/* (c) 2010 saa
+ */
 #include <sqlite3.h>
 
 typedef struct _Database Database;

@@ -1,6 +1,8 @@
 /* filename: input.c
  *  chiefengineer
  *  Sat May 08 00:31:26 PDT 2010
+ *  
+ *  mostly stolen from enna.
  */
 
 #include <string.h>

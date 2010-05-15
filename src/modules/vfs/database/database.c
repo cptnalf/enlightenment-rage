@@ -1,4 +1,6 @@
-
+/*
+ * (c) 2010 saa
+ */
 #include <Eina.h>
 #include <stdlib.h>
 #include <stdio.h>

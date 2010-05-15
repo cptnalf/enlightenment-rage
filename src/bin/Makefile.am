@@ -55,14 +55,18 @@ video_lib.c \
 video_lib.h
 
 include $(top_srcdir)/src/modules/input/files.mak
-include $(top_srcdir)/src/modules/activity/dvb/files.mak
-include $(top_srcdir)/src/modules/activity/videos/files.mak
+include $(top_srcdir)/src/modules/activity/audio/files.mak
 include $(top_srcdir)/src/modules/activity/config/files.mak
+include $(top_srcdir)/src/modules/activity/dvb/files.mak
+include $(top_srcdir)/src/modules/activity/photo/files.mak
+include $(top_srcdir)/src/modules/activity/videos/files.mak
 
 rage_SOURCES += $(INPUT_SRCS)
-rage_SOURCES += $(VIDEO_SRCS)
-rage_SOURCES += $(DVB_SRCS)
+rage_SOURCES += $(AUDIO_SRCS)
 rage_SOURCES += $(CONFIG_SRCS)
+rage_SOURCES += $(DVB_SRCS)
+rage_SOURCES += $(PHOTO_SRCS)
+rage_SOURCES += $(VIDEO_SRCS)
 
 rage_LDADD = @my_libs@ \
 @EVAS_LIBS@ @ECORE_LIBS@ @EDJE_LIBS@ @EMOTION_LIBS@ @ELEMENTARY_LIBS@ \
