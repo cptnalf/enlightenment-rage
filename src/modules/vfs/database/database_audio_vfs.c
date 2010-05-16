@@ -4,12 +4,11 @@
  */
 
 #include <Eina.h>
+#include "database.h"
 #include "vfs.h"
 
-#include "database.h"
-
 /* audio */
-static Eina_List* _vfs_db_audio_get(const char* path)
+static Eina_List* _vfs_db_audio_get(Vfs_Item* item)
 {
 	return NULL;
 }
@@ -24,7 +23,7 @@ static Eina_List* _vfs_db_audio_favorites_get(int count)
 	return NULL;
 }
 
-static void _vfs_db_audio_record_play(const Volume_Item* item)
+static void _vfs_db_audio_record_play(const Vfs_Item* item)
 {
 }
 

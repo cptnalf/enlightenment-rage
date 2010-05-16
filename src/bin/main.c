@@ -1,14 +1,12 @@
 #include "main.h"
 #include <Ecore_Getopt.h>
-#include "database.h"
 #include "input.h"
-#include "video_lib.h"
 
 extern void main_menu_audio(void *data);
 extern void main_menu_dvd(void *data);
 extern void main_menu_photo(void *data);
 extern void main_menu_tv(void *data);
-static void menu_video(void *data);
+extern void main_menu_video(void *data);
 
 typedef struct _Mode Mode;
 

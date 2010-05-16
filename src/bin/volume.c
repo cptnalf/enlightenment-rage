@@ -1,6 +1,5 @@
 #include "main.h"
 
-#include "database.h"
 #include <sys/types.h>
 #include <dirent.h>
 
@@ -60,6 +59,22 @@ volume_item_new(const char* path, const char* name, const char* genre, const cha
 	return item;
 }
 
+Volume_Item*
+volume_item_copy(Volume_Item* item)
+{
+	Volume_Item* copy = volume_item_new(item->path, item->name, item->genre, item->type);
+	
+	copy->last_played = item->last_played;
+	copy->play_count = item->play_count;
+  copy->last_pos = item->last_pos;
+  copy->length = item->length;
+	if (item->artist) { copy->artist = eina_stringshare_add(item->artist); }
+	if (item->album)  { copy->album = eina_stringshare_add(item->album); }
+  copy->track = item->track;
+	
+	return copy;
+}
+
 void
 volume_item_free(Volume_Item* item)
 {
@@ -71,6 +86,9 @@ volume_item_free(Volume_Item* item)
 			eina_stringshare_del(item->genre);
 			
 			if (item->type) { eina_stringshare_del(item->type); }
+			
+			if (item->artist) { eina_stringshare_del(item->artist); }
+			if (item->album)  { eina_stringshare_del(item->album); }
 			free(item);
 		}
 }
@@ -307,7 +325,7 @@ volume_idler(void *data)
 {
 	Scan* s;
 	Eina_List* list;
-	Database* db;
+	/*	Database* db; */
 	
 /* 	s = data; */
 /* 	list = database_video_files_get(s->db, 0, 0); */

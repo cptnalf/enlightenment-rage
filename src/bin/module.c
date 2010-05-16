@@ -17,7 +17,7 @@ extern Rage_Module_Api rage_mod_activity_video_api;
 #endif
 
 extern Rage_Module_Api rage_mod_input_kbd_api;
-extern Rage_Module_Api rage_mod_vfs_db_video;
+extern Rage_Module_Api rage_mod_vfs_db_video_api;
 
 #ifdef BUILD_INPUT_LIRC
 extern Rage_Module_Api rage_mod_input_lirc_api;
@@ -84,7 +84,7 @@ rage_module_init(void)
 	eina_array_push(_plugins_array, &rage_mod_input_lirc_api);
 #endif
 	
-	eina_array_push(_plugins_array, &rage_mod_vfs_db_video);
+	eina_array_push(_plugins_array, &rage_mod_vfs_db_video_api);
 	
 	/* Log the array */
 	printf("Available Plugins (static):\n");

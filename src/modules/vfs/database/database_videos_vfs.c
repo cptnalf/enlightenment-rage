@@ -4,6 +4,9 @@
  */
 
 #include <Eina.h>
+#include <stdio.h>
+#include "rage.h"
+#include "module.h"
 #include "vfs.h"
 
 #include "database.h"
@@ -178,8 +181,7 @@ _get_genres(Eina_List* videos, const char* genre)
 							else
 								snprintf(buf, sizeof(buf), "%s", ge->label);
 							
-							vli = video_lib_item_new(ge->label, buf);
-							
+							vli = vfs_item_new(ge->label, buf, ge->count);
 							videos = eina_list_append(videos, vli);
 						}
 					
@@ -195,7 +197,7 @@ _get_items(Eina_List* videos, const char* genre)
 {
 	DBIterator* it;
 	Database* db = database_new();
-	it = database_video_files_genre_search(db, vl->path);
+	it = database_video_files_genre_search(db, genre);
 	
 	{
 		Vfs_Item* vli;
@@ -241,7 +243,7 @@ _vfs_db_videos_get(Vfs_Item* item)
 /**
  *  @param count  number of recent files to get.
  */
-static Eina_List* _vfs_db_videos_recent_get(int count)
+static Eina_List* _vfs_db_videos_recents_get(int count)
 {
 	Eina_List* recents = NULL;
 	Database* db;
@@ -305,23 +307,24 @@ static void _vfs_db_videos_record_play(Vfs_Item* item)
 {
 	if (! item->is_menu && item->vi)
 		{
+			Database* db;
 			db = database_new();
 			database_video_file_update(db, item->vi);
 			database_free(db);
 		}
 }
 
-Vfs_Video_Handler DatabaseVideoVfs = 
+Vfs_Source DatabaseVideoVfs = 
 	{
 		VFS_TYPE_VIDEO,
 		"Database Videos VFS",
 		"icon/video",
 		"icon/video_folder",
 		
-		_vfs_db_video_get,
-		_vfs_db_video_recents_get,
-		_vfs_db_video_favorites_get,
-		_vfs_db_record_play,
+		_vfs_db_videos_get,
+		_vfs_db_videos_recents_get,
+		_vfs_db_videos_favorites_get,
+		_vfs_db_videos_record_play,
 	};
 
 /* Module interface */
@@ -333,7 +336,7 @@ Vfs_Video_Handler DatabaseVideoVfs =
 static void
 module_init(Rage_Module *em)
 {
-	rage_vfs_source_add(DatabaseVideoVfs);
+	rage_vfs_source_add(&DatabaseVideoVfs);
 }
 
 static void

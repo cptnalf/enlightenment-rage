@@ -1,7 +1,6 @@
 #include "main.h"
 #include "input.h"
 #include "gen_thumb.h"
-#include "video_lib.h"
 #include "video_preview.h"
 #include "video_input.h"
 

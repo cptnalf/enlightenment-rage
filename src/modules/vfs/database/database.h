@@ -2,6 +2,7 @@
 /* (c) 2010 saa
  */
 #include <sqlite3.h>
+#include "volume.h"
 
 typedef struct _Database Database;
 struct _Database

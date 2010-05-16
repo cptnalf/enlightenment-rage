@@ -42,17 +42,14 @@ video_preview.h \
 video_preview.c \
 view_list.c \
 view_list.h \
+vfs.c \
 vfs.h \
 module.c \
 module.h \
 input.h \
 input.c \
-database.c \
-database.h \
 gen_thumb.c \
-gen_thumb.h \
-video_lib.c \
-video_lib.h
+gen_thumb.h
 
 include $(top_srcdir)/src/modules/input/files.mak
 include $(top_srcdir)/src/modules/activity/audio/files.mak
@@ -60,6 +57,7 @@ include $(top_srcdir)/src/modules/activity/config/files.mak
 include $(top_srcdir)/src/modules/activity/dvb/files.mak
 include $(top_srcdir)/src/modules/activity/photo/files.mak
 include $(top_srcdir)/src/modules/activity/videos/files.mak
+include $(top_srcdir)/src/modules/vfs/database/files.mak
 
 rage_SOURCES += $(INPUT_SRCS)
 rage_SOURCES += $(AUDIO_SRCS)
@@ -67,6 +65,7 @@ rage_SOURCES += $(CONFIG_SRCS)
 rage_SOURCES += $(DVB_SRCS)
 rage_SOURCES += $(PHOTO_SRCS)
 rage_SOURCES += $(VIDEO_SRCS)
+rage_SOURCES += $(VFS_DB_SRCS)
 
 rage_LDADD = @my_libs@ \
 @EVAS_LIBS@ @ECORE_LIBS@ @EDJE_LIBS@ @EMOTION_LIBS@ @ELEMENTARY_LIBS@ \

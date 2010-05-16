@@ -8,7 +8,7 @@
 #include "vfs.h"
 
 /* photos */
-static Eina_List* _vfs_db_photos_get(const char* path)
+static Eina_List* _vfs_db_photos_get(Vfs_Item* item)
 {
 	return NULL;
 }

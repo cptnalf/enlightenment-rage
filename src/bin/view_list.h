@@ -27,7 +27,7 @@
 //#include "input.h"
 
 Evas_Object *rage_list_add (Evas *evas);
-void rage_list_file_append(Evas_Object *obj, Rage_Vfs_File *file,
+void rage_list_file_append(Evas_Object *obj, Vfs_Item* file, //Rage_Vfs_File *file,
     void (*func_activated) (void *data), void *data);
 Eina_List* rage_list_files_get(Evas_Object* obj);
 void rage_list_select_nth(Evas_Object *obj, int nth);

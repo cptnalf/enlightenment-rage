@@ -33,7 +33,8 @@ typedef struct _List_Item List_Item;
 
 struct _List_Item
 {
-	Rage_Vfs_File *file;
+	//	Rage_Vfs_File *file;
+	Vfs_Item* file;
 	void (*func_activated) (void *data);
 	void *data;
 	Elm_Genlist_Item *item;
@@ -123,12 +124,13 @@ _list_item_icon_get(const void *data, Evas_Object *obj, const char *part)
 				return NULL;
 
 			ic = elm_icon_add(obj);
-			if (li->file->icon && li->file->icon[0] == '/')
-				{ elm_icon_file_set(ic, li->file->icon, NULL); }
-			else if (li->file->icon)
-				{ elm_icon_file_set(ic, rage_theme_get(), li->file->icon); }
-			else
-				{ return NULL; }
+			elm_icon_file_set(ic, rage_theme_get(), "icon/video");
+			/* if (li->file->icon && li->file->icon[0] == '/') */
+			/* 	{ elm_icon_file_set(ic, li->file->icon, NULL); } */
+			/* else if (li->file->icon) */
+			/* 	{ elm_icon_file_set(ic, rage_theme_get(), li->file->icon); } */
+			/* else */
+			/* 	{ return NULL; } */
 			
 			evas_object_size_hint_min_set(ic, 32, 32);
 			evas_object_show(ic);
@@ -138,7 +140,7 @@ _list_item_icon_get(const void *data, Evas_Object *obj, const char *part)
     {
 			Evas_Object *ic;
 
-			if (!li->file || !li->file->is_directory)
+			if (!li->file || !li->file->is_menu)
 				{ return NULL; }
 
 			ic = elm_icon_add(obj);
@@ -154,7 +156,8 @@ _list_item_icon_get(const void *data, Evas_Object *obj, const char *part)
 static void
 _list_item_del(const void *data, Evas_Object *obj)
 {
-	Rage_Vfs_File *item = (void *) data;
+	//Rage_Vfs_File *item = (void *) data;
+	Vfs_Item* item = (void*) data;
 
 	if (!item) return;
 }
@@ -240,7 +243,7 @@ rage_list_add(Evas *evas)
 }
 
 void
-rage_list_file_append(Evas_Object *obj, Rage_Vfs_File *file,
+rage_list_file_append(Evas_Object *obj, Vfs_Item* file, //Rage_Vfs_File *file,
                       void (*func_activated) (void *data),  void *data)
 {
 	Smart_Data *sd;
