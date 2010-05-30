@@ -11,6 +11,9 @@ Evas_Object *o_video_bg = NULL;
 
 void video_spu_audio_info_print(int show);
 
+
+static int ScreenWidth = 1920;
+static int ScreenHeight = 1080;
 static Ecore_Job *video_stopped_job = NULL;
 static Ecore_Timer *_hide_timer = NULL;
 static Input_Listener* video_listener = NULL;
@@ -61,17 +64,21 @@ video_resize(void)
 	ratio = emotion_object_ratio_get(o_video);
 	if (ratio > 0.0) iw = (ih * ratio) + 0.5;
 	else ratio = (double)iw / (double)ih;
-	w = 10240 * ratio;
-	h = 10240;
 	
 	evas_output_viewport_get(evas, 0, 0, &rw, &rh);
 	
-	/* this provides for the lost area on my mitsubishi dlp. */
-	static int x_offset = 50; //65;
-	static int y_offset = 15; //20;
+	//w = ScreenWidth * ratio;
+	//h = ScreenHeight;
+	w = iw;
+	h = ih;
 	
-	rw -= (x_offset * 2);
-	rh -= ((y_offset * 2) + 24);
+	/* this provides for the lost area on my mitsubishi dlp. 
+	 * it's a 1080p tv 
+	 */	
+	rw -= (50 * 2);
+	rh -= ((15 * 2) + 24);
+	
+	/* this is the max size the video can get. */
 	edje_extern_object_max_size_set(o_video, rw, rh);
 	
 	if (zoom_mode)
@@ -276,6 +283,7 @@ video_init(char *module, char *file, char *swallow)
 	emotion_object_play_set(o_video, 1);
 	emotion_object_audio_mute_set(o_video, 0);
 	emotion_object_audio_volume_set(o_video, 1.0);
+	emotion_object_smooth_scale_set(o_video, EINA_TRUE);
 	layout_swallow(swallow, o_video_bg);
 	
 	edje_extern_object_aspect_set(o_video, EDJE_ASPECT_CONTROL_BOTH, 640, 480);
