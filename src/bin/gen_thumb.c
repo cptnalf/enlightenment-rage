@@ -128,7 +128,7 @@ _gen_thumb_free(void *data, Evas *e, Evas_Object *obj, void *event_info)
 		}
 }
 
-static int
+static Eina_Bool
 _gen_thumb_overtime_timer(void* data)
 {
 	Thumb *thumb;
@@ -147,7 +147,7 @@ _gen_thumb_overtime_timer(void* data)
 			thumb->handler = NULL;
 		}
 	thumb->timer = NULL;
-	return 0;
+	return EINA_FALSE;
 }
 
 static void
