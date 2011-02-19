@@ -9,13 +9,13 @@
 static double jump = 0.0;
 static Ecore_Timer *jump_reset_timer = NULL;
 
-static int
+static Eina_Bool
 video_jump_reset_timer_cb(void *data)
 {
 	if (jump > 0.0) jump = 10.0;
 	else if (jump < 0.0) jump = -10.0;
 	jump_reset_timer = NULL;
-	return 0;
+	return EINA_FALSE;
 };
 
 /* ESC   INS   PSE

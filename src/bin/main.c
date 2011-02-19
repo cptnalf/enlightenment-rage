@@ -29,11 +29,11 @@ static Eina_List   *modes      = NULL;
 static int          cmode      = NONE;
 
 static void main_usage(void);
-static int main_volume_add(void *data, int type, void *ev);
-static int main_volume_del(void *data, int type, void *ev);
+static Eina_Bool main_volume_add(void *data, int type, void *ev);
+static Eina_Bool main_volume_del(void *data, int type, void *ev);
 static Eina_Bool _main_event_cb(void* data, rage_input in);
 static void main_mouse_move(void *data, Evas *e, Evas_Object *obj, void *event_info);
-static int  main_signal_exit(void *data, int ev_type, void *ev);
+static Eina_Bool  main_signal_exit(void *data, int ev_type, void *ev);
 static void main_delete_request(Ecore_Evas *ee);
 static void main_resize(Ecore_Evas *ee);
 extern void main_menu_config(void *data);
@@ -282,13 +282,13 @@ main_reset(void)
    execlp("rage", "rage", NULL);
 }
 
-static int
+static Eina_Bool
 main_volume_add(void *data, int type, void *ev)
 {
 	return 1;
 }
 
-static int
+static Eina_Bool
 main_volume_del(void *data, int type, void *ev)
 {
 	return 1;
@@ -335,11 +335,11 @@ _main_event_cb(void* data, rage_input in)
 	return result;
 }
 
-static int
+static Eina_Bool
 main_signal_exit(void *data, int ev_type, void *ev)
 {
 	ecore_main_loop_quit();
-	return 1;
+	return EINA_TRUE;
 }
 
 static void
@@ -364,7 +364,7 @@ main_menu_scan(void *data)
 	volume_update();
 }
 
-int
+Eina_Bool
 main_mouse_timeout(void* data)
 {
    ecore_evas_cursor_set(ecore_evas, "", 999, 0, 0);

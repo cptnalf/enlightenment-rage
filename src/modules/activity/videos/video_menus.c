@@ -16,7 +16,7 @@ static void video_menu_library(void *data);
 
 /* event handlers */
 
-static int
+static Eina_Bool
 _video_history_track(void* data)
 {
 	Vfs_Item* vi;
@@ -26,6 +26,8 @@ _video_history_track(void* data)
 	
 	vi =  data;
 	vfs_source->record_play(vi);
+	
+	return EINA_FALSE;
 }
 
 static void

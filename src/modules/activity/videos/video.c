@@ -18,7 +18,7 @@ static Ecore_Job *video_stopped_job = NULL;
 static Ecore_Timer *_hide_timer = NULL;
 static Input_Listener* video_listener = NULL;
 
-static int video_menu_bg_hide_tmer_cb(void *data);
+static Eina_Bool video_menu_bg_hide_tmer_cb(void *data);
 static void video_resize(void);
 static void video_obj_frame_decode_cb(void *data, Evas_Object *obj, void *event_info);
 static void video_obj_frame_resize_cb(void *data, Evas_Object *obj, void *event_info);
@@ -33,7 +33,7 @@ static void video_obj_button_cb(void *data, Evas_Object *obj, void *event_info);
 static void video_stopped_job_cb(void *data);
 
 /***/
-static int
+static Eina_Bool
 video_menu_bg_hide_tmer_cb(void *data)
 {
 	background_hide();
@@ -48,7 +48,7 @@ video_menu_bg_hide_tmer_cb(void *data)
 		fprintf(stderr, "(%d,%d) %dx%d\n", x, y, w, h);
 	}
 	
-	return 0;
+	return EINA_FALSE;
 }
 
 static void
@@ -67,10 +67,10 @@ video_resize(void)
 	
 	evas_output_viewport_get(evas, 0, 0, &rw, &rh);
 	
-	//w = ScreenWidth * ratio;
-	//h = ScreenHeight;
-	w = iw;
-	h = ih;
+	w = 19200 * ratio;
+	h = 19200;
+	//w = iw;
+	//h = ih;
 	
 	/* this provides for the lost area on my mitsubishi dlp. 
 	 * it's a 1080p tv 

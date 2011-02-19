@@ -23,8 +23,8 @@ struct _Thumb
 
 static void _gen_thumb_free(void *data, Evas *e, Evas_Object *obj, void *event_info);
 static void _gen_thumb_resize(void *data, Evas *e, Evas_Object *obj, void *event_info);
-static int _gen_thumb_timer(void *data);
-static int _gen_thumb_exe_exit(void *data, int ev_type, void *ev);
+static Eina_Bool _gen_thumb_timer(void *data);
+static Eina_Bool _gen_thumb_exe_exit(void *data, int ev_type, void *ev);
 
 static Ecore_Timer *timer = NULL;
 static Eina_List *thumbs = NULL;
@@ -159,7 +159,7 @@ _gen_thumb_resize(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	evas_object_image_fill_set(obj, 0, 0, w, h);
 }
 
-static int
+static Eina_Bool
 _gen_thumb_timer(void *data)
 {
    Thumb *thumb;
@@ -232,10 +232,10 @@ _gen_thumb_timer(void *data)
 			/* so, there's nothing left for us to do... */
 			gen_thumb_pause_set(1);
 		}
-	return 1;
+	return EINA_TRUE;
 }
 
-static int
+static Eina_Bool
 _gen_thumb_exe_exit(void *data, int ev_type, void *ev)
 {
 	Ecore_Exe_Event_Del *e;
@@ -258,5 +258,5 @@ _gen_thumb_exe_exit(void *data, int ev_type, void *ev)
 					thumb->timer = NULL;
 				}
 		}
-	return 1;
+	return EINA_TRUE;
 }
