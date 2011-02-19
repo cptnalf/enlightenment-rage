@@ -96,7 +96,8 @@ _client_cb_add(void *data __UNUSED__, int type __UNUSED__, void *event)
 {
 	Ecore_Ipc_Event_Server_Add *e;
 	Node *nd;
-   
+	
+	e = event;
 	nd = ecore_ipc_server_data_get(e->server);
 	if (!nd) return 1;
 	nd->connected = 1;
@@ -109,6 +110,7 @@ _client_cb_del(void *data __UNUSED__, int type __UNUSED__, void *event)
 	Ecore_Ipc_Event_Server_Del *e;
 	Node *nd;
    
+	e = event;
 	nd = ecore_ipc_server_data_get(e->server);
 	if (!nd) return 1;
 	_node_del(nd);
@@ -121,6 +123,7 @@ _client_cb_data(void *data __UNUSED__, int type __UNUSED__, void *event)
 	Ecore_Ipc_Event_Server_Data *e;
 	Node *nd;
    
+	e = event;
 	nd = ecore_ipc_server_data_get(e->server);
 	if (!nd) return 1;
 	switch (e->major)
