@@ -40,7 +40,9 @@ Database* database_new()
 		{
 			char* errmsg;
 			result = sqlite3_exec(db->db,
-														"CREATE TABLE video_files("
+														"CREATE TABLE "
+														" IF NOT EXISTS "
+														"video_files ("
 														"path TEXT PRIMARY KEY,"  // sha hash of the path
 														"genre TEXT,"             // genre of the file
 														"title TEXT,"             // title of the file.
@@ -57,6 +59,7 @@ Database* database_new()
 					fprintf(stderr, "unable to create table! :%s\n", errmsg);
 					*/
 				}
+			
 		}
 	return db;
 }
@@ -168,7 +171,8 @@ DBIterator* database_video_files_get(Database* db, const char* query_part2)
 	
 	const char* query_base = 
 		"SELECT path, title, genre, f_type, playcount, length, lastplayed "
-		"FROM video_files ";
+		"FROM video_files "
+		"WHERE f_type = 'video' ";
 	
 	if (! query_part2)
 		{
@@ -202,7 +206,7 @@ DBIterator* database_video_files_path_search(Database* db, const char* path)
 	DBIterator* it;
 	char* query;
 	
-	query = sqlite3_mprintf("WHERE path like '%q%s' "
+	query = sqlite3_mprintf("AND path like '%q%s' "
 													"ORDER BY title, path ",
 													path, "%");
 	
@@ -222,7 +226,7 @@ DBIterator* database_video_files_genre_search(Database* db, const char* genre)
 	DBIterator* it;
 	char* query;
 	
-	query = sqlite3_mprintf("WHERE genre = '%q' "
+	query = sqlite3_mprintf("AND genre = '%q' "
 													"ORDER BY title, path ",
 													genre);
 	
@@ -240,7 +244,7 @@ DBIterator* database_video_files_genre_search(Database* db, const char* genre)
 DBIterator* database_video_favorites_get(Database* db)
 {
  	const char* where_clause = 
-		"WHERE playcount > 0 "
+		"AND playcount > 0 "
 		"ORDER BY playcount DESC, lastplayed DESC, title, path "
 		"LIMIT 50";
 	
