@@ -417,7 +417,7 @@ group {
 
 group {
  name: "menu_itemdp";
- min: 600 40; // size hints for the ui
+ min: 1000 40; // size hints for the ui
 	parts {
 		part {
 		name: "_bg0";
