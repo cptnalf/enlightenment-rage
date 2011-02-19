@@ -1,4 +1,5 @@
 #include "main.h"
+#include "config.h"
 #include <Ecore_Getopt.h>
 #include "input.h"
 
