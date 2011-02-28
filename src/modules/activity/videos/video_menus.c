@@ -77,6 +77,20 @@ _menu_add_list(Eina_List* vfs_items, const char* menu_label)
 	Vfs_Item* item;
 	Eina_List* ptr;
 	const char* sel = NULL;
+	Vfs_Item* lastPlayed = NULL;
+	
+	EINA_LIST_FOREACH(vfs_items, ptr, item)
+		{
+			if (!item->is_menu && item->vi->last_played > 0.0)
+				{
+					if (lastPlayed != NULL)
+						{
+							if (lastPlayed->vi->last_played < item->vi->last_played)
+								{ lastPlayed = item; }
+						}
+					else { lastPlayed = item; }
+				}
+		}
 	
 	EINA_LIST_FOREACH(vfs_items, ptr, item)
 		{
@@ -100,8 +114,9 @@ _menu_add_list(Eina_List* vfs_items, const char* menu_label)
 					/* make the menu item,
 					 * this is a normal video file, so it gets the standard handlers.
 					 */
-					menu_item_add(item->path, item->label,
+					menu_item_add_special(item->path, item->label,
 												"", buf,
+												(item == lastPlayed) ? 2 : 1,
 												_video_menu_view, item,
 												vfs_item_free,
 												video_menu_over,

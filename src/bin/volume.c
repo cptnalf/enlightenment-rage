@@ -46,10 +46,11 @@ int VOLUME_SCAN_STOP = 0;
 int VOLUME_SCAN_GO = 0;
 
 Volume_Item*
-volume_item_new(const char* path, const char* name, const char* genre, const char* type)
+volume_item_new(const long long id, const char* path, const char* name, const char* genre, const char* type)
 {
 	Volume_Item* item = calloc(1, sizeof(Volume_Item));
 	
+	item->id = id;
 	item->path = strdup(path);
 	item->rpath = ecore_file_realpath(item->path);
 	if (name) { item->name = strdup(name); }
@@ -62,7 +63,7 @@ volume_item_new(const char* path, const char* name, const char* genre, const cha
 Volume_Item*
 volume_item_copy(Volume_Item* item)
 {
-	Volume_Item* copy = volume_item_new(item->path, item->name, item->genre, item->type);
+	Volume_Item* copy = volume_item_new(item->id, item->path, item->name, item->genre, item->type);
 	
 	copy->last_played = item->last_played;
 	copy->play_count = item->play_count;

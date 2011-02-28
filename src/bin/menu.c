@@ -34,6 +34,7 @@ struct _Menu_Item
 	const char    *icon;
 	const char    *desc;
 	const char    *info;
+	char     menu_display_type;
 	void         (*func) (void *data);
 	void          *data;
 	void         (*free_func) (void *data);
@@ -159,7 +160,12 @@ _menu_realize(Menu *m)
 			mi = l->data;
 			mi->base = edje_object_add(evas);
 			
-			edje_object_file_set(mi->base, theme, "menu_itemdp");
+			if (mi->menu_display_type == 2)
+				{
+					edje_object_file_set(mi->base, theme, "menu_itemly");
+				}
+			else
+				{ edje_object_file_set(mi->base, theme, "menu_itemdp"); }
 			
 			edje_object_signal_callback_add(mi->base, "mouse,move", "*", _menu_mouseover_select, (void*)mi->label);
 			edje_object_signal_callback_add(mi->base, "mouse,clicked,1", "*", _menu_mouseover_go, NULL);
@@ -375,6 +381,20 @@ menu_item_add(const char *icon, const char *label,
 							void (*over_func) (void *data),
 							void (*out_func) (void *data)
 							)
+{ 
+	menu_item_add_special(icon, label, desc, info, 1, 
+												func, data, free_func, over_func, out_func);
+}
+
+void
+menu_item_add_special(const char *icon, const char *label, 
+											const char *desc, const char *info, 
+											const int menu_display_type,
+											void (*func) (void *data), void *data,
+											void (*free_func) (void *data),
+											void (*over_func) (void *data),
+											void (*out_func) (void *data)
+											)
 {
 	Menu *m;
 	Menu_Item *mi;
@@ -386,6 +406,7 @@ menu_item_add(const char *icon, const char *label,
 	if (icon) mi->icon = eina_stringshare_add(icon);
 	if (desc) mi->desc = eina_stringshare_add(desc);
 	if (info) mi->info = eina_stringshare_add(info);
+	mi->menu_display_type = menu_display_type;
 	mi->func = func;
 	mi->over_func = over_func;
 	mi->out_func = out_func;

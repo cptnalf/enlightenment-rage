@@ -39,18 +39,19 @@ Database* database_new()
 	if (db)
 		{
 			char* errmsg;
-			result = sqlite3_exec(db->db,
-														"CREATE TABLE "
-														" IF NOT EXISTS "
-														"video_files ("
-														"path TEXT PRIMARY KEY,"  // sha hash of the path
-														"genre TEXT,"             // genre of the file
-														"title TEXT,"             // title of the file.
-														"f_type TEXT,"            // type of file (video, audio, photo
-														"playcount INTEGER,"      // number of times its played.
-														"length INTEGER,"         // length in seconds.
-														"lastplayed INTEGER)"     // time_t it was last played
-														, NULL, NULL, &errmsg);
+			result = 
+				sqlite3_exec(db->db,
+										 "CREATE TABLE "
+										 " IF NOT EXISTS "
+										 "video_files ("
+										 "ID INTEGER PRIMARY KEY, "
+										 "path TEXT UNIQUE,"  // the path
+										 "genre TEXT,"             // genre of the file
+										 "title TEXT,"             // title of the file.
+										 "f_type TEXT,"            // type of file (video, audio, photo
+										 "length INTEGER,"         // length in seconds.
+										 "createdDate INTEGER)"        // time_t it was last played
+										 , NULL, NULL, &errmsg);
 			
 			if (result != SQLITE_OK)
 				{
@@ -59,7 +60,19 @@ Database* database_new()
 					fprintf(stderr, "unable to create table! :%s\n", errmsg);
 					*/
 				}
-			
+			result = sqlite3_exec(db->db,
+														"CREATE TABLE "
+														"IF NOT EXISTS "
+														" PlayHistory "
+														"( "
+														" path TEXT PRIMARY KEY "
+														",playedDate INTEGER "
+														" ) "
+														, NULL, NULL, &errmsg);
+			if (result != SQLITE_OK)
+				{
+					sqlite3_free(errmsg);
+				}
 		}
 	return db;
 }
@@ -160,26 +173,32 @@ int database_iterator_move_next(DBIterator* it)
  *  @param query_part2  the query after the 'from' clause.
  *  @return list or NULL if error (or no files)
  */
-DBIterator* database_video_files_get(Database* db, const char* query_part2)
+DBIterator* database_video_files_get(Database* db, const char* where_part, const char* orderby_part)
 {
 	char* error_msg;
 	int result;
 	int rows, cols;
 	char** tbl_results=0;
 	DBIterator* it = 0;
-	char query[4096];
+	char query[8192];
 	
 	const char* query_base = 
-		"SELECT path, title, genre, f_type, playcount, length, lastplayed "
-		"FROM video_files "
-		"WHERE f_type = 'video' ";
+		"SELECT v.id, v.path, v.title, v.genre, v.f_type, "
+		" COUNT(ph.playedDate) AS playCount, v.length, "
+		" MAX(ph.playedDate) AS lastPlayed "
+		"FROM video_files AS v "
+		"LEFT JOIN PlayHistory AS ph ON ph.path = v.path "
+		"WHERE ";
 	
-	if (! query_part2)
+	if (! orderby_part)
 		{
-			query_part2 = "ORDER BY title, path ";
+			orderby_part = "ORDER BY v.title, v.path ";
 		}
+	if (! where_part) { where_part = " v.f_type = 'video' "; }
 	
-	snprintf(query, sizeof(query), "%s %s", query_base, query_part2);
+	snprintf(query, sizeof(query), 
+					 "%s %s GROUP BY v.path, v.title %s ",
+					 query_base, where_part, orderby_part);
 	
 	result = sqlite3_get_table(db->db, query, &tbl_results, &rows, &cols, &error_msg);
 	if (SQLITE_OK == result)
@@ -204,14 +223,12 @@ DBIterator* database_video_files_get(Database* db, const char* query_part2)
 DBIterator* database_video_files_path_search(Database* db, const char* path)
 {
 	DBIterator* it;
-	char* query;
+	char* where_part;
 	
-	query = sqlite3_mprintf("AND path like '%q%s' "
-													"ORDER BY title, path ",
-													path, "%");
+	where_part = sqlite3_mprintf(" v.path like '%q%s' ", path, "%") ;
 	
-	it = database_video_files_get(db, query);
-	sqlite3_free(query);
+	it = database_video_files_get(db, where_part, NULL);
+	sqlite3_free(where_part);
 	
 	return it;
 }
@@ -226,11 +243,9 @@ DBIterator* database_video_files_genre_search(Database* db, const char* genre)
 	DBIterator* it;
 	char* query;
 	
-	query = sqlite3_mprintf("AND genre = '%q' "
-													"ORDER BY title, path ",
-													genre);
+	query = sqlite3_mprintf(" v.f_type = 'video' AND v.genre = '%q' ", genre);
 	
-	it = database_video_files_get(db, query);
+	it = database_video_files_get(db, query, NULL);
 	sqlite3_free(query);
 	
 	return it;
@@ -243,12 +258,36 @@ DBIterator* database_video_files_genre_search(Database* db, const char* genre)
  */
 DBIterator* database_video_favorites_get(Database* db)
 {
- 	const char* where_clause = 
-		"AND playcount > 0 "
-		"ORDER BY playcount DESC, lastplayed DESC, title, path "
-		"LIMIT 50";
+	char* error_msg;
+	int result;
+	int rows, cols;
+	char** tbl_results=0;
+	DBIterator* it = 0;
 	
-	return database_video_files_get(db, where_clause);
+	const char* query = 
+		"SELECT v.id, v.path, v.title, v.genre, v.f_type, "
+		" COUNT(ph.playedDate) AS playCount, v.length, "
+		" MAX(ph.playedDate) AS lastPlayed "
+		"FROM video_files AS v "
+		"JOIN PlayHistory AS ph ON ph.path = v.path "
+		"WHERE v.f_type = 'video' "
+		"GROUP BY v.path "
+		"ORDER BY playCount DESC, lastPlayed DESC, v.title, v.path "
+		" LIMIT 50 " ;
+	
+	result = sqlite3_get_table(db->db, query, &tbl_results, &rows, &cols, &error_msg);
+	if (SQLITE_OK == result)
+		{
+			it =_database_iterator_new(_video_files_next, 0, /* no extra data to free. */
+																 tbl_results, rows, cols);
+		}
+	else
+		{
+			printf("error: %s", error_msg);
+			sqlite3_free(error_msg);
+		}
+	
+	return it;
 }
 
 /** retrieve the first 50 files with a recent lastplayed date.
@@ -258,10 +297,18 @@ DBIterator* database_video_favorites_get(Database* db)
  */
 DBIterator* database_video_recents_get(Database* db)
 {
-	const char* where_clause =
-		"ORDER BY lastplayed DESC, title, path "
+	const char* orderby_clause = 
+		"ORDER BY lastPlayed DESC, v.title, v.path "
 		" LIMIT 50";
-	return database_video_files_get(db, where_clause);
+	return database_video_files_get(db, " v.f_type = 'video' " , orderby_clause);
+}
+
+DBIterator* database_video_news_get(Database* db)
+{
+	const char* orderby_clause = 
+		"ORDER BY v.createdDate DESC, v.title, v.path "
+		" LIMIT 50";
+	return database_video_files_get(db, " v.f_type = 'video' " , orderby_clause);
 }
 
 static void* _genre_next(DBIterator* it)
@@ -291,7 +338,7 @@ DBIterator* database_video_genres_get(Database* db, const char* genre)
 			if (genre[0] != 0)
 				{
 					/* not an empty string. */
-					if (!strncmp("anime", genre, 5))
+					if (!strcmp("anime", genre))
 						{
 							query = 
 								"SELECT genre, count(path) "
@@ -300,7 +347,7 @@ DBIterator* database_video_genres_get(Database* db, const char* genre)
 								"GROUP BY genre "
 								"ORDER BY genre";
 						}
-					else if (!strncmp("movies", genre, 6))
+					else if (!strcmp("movies", genre))
 						{
 							query = 
 								"SELECT genre, count(path) "
@@ -331,7 +378,7 @@ DBIterator* database_video_genres_get(Database* db, const char* genre)
 		{
 			if (rows > 0)
 				{
-					int max_item = rows * cols;
+					//int max_item = rows * cols;
 					
 					it = _database_iterator_new(_genre_next, 0, /* nothing to free */
 																			tbl_results, rows, cols);
@@ -350,7 +397,7 @@ void database_video_file_del(Database* db, const char* path)
 	char* query = sqlite3_mprintf("DELETE FROM video_files WHERE path = %Q",
 																path);
 	
-	printf("%s\n", query);
+	//printf("%s\n", query);
 	result = sqlite3_exec(db->db, query, NULL, NULL, &error_msg);
 	if (result != SQLITE_OK)
 		{
@@ -367,13 +414,18 @@ void database_video_file_add(Database* db, const Volume_Item* item)
 {
 	int result;
 	char* error_msg =0;
-	char* query = sqlite3_mprintf(
-		 "INSERT INTO video_files (path, title, genre, f_type, playcount, length, lastplayed) "
-		 "VALUES(%Q, %Q, %Q, %Q, %d, %d, %d)",
-		 item->path, item->name, item->genre, item->type,
-		 item->play_count, item->length, item->last_played);
+	time_t lp = time(0);
+	char queryBuf[8192];
 	
-	result = sqlite3_exec(db->db, query, NULL, NULL, &error_msg);
+	char* query = sqlite3_mprintf(
+		 "INSERT INTO video_files (path, title, genre, f_type, length, createddate) "
+		 "VALUES(%Q, %Q, %Q, %Q, %d",
+		 item->path, item->name, item->genre, item->type,
+		 item->length);
+	
+	snprintf(queryBuf, sizeof(queryBuf), "%s, %ld)", query, lp);
+	
+	result = sqlite3_exec(db->db, queryBuf, NULL, NULL, &error_msg);
 	if (result != SQLITE_OK)
 		{
 			fprintf(stderr, "db: insert error: \"%s\"; %s\n", query, error_msg);
@@ -385,24 +437,24 @@ void database_video_file_add(Database* db, const Volume_Item* item)
 
 /* played the file.
  */
-void database_video_file_update(Database* db, Volume_Item* item)
+void database_video_file_update(Database* db, const Volume_Item* item)
 {
 	int result;
 	char* error_msg;
 	char* query;
 	time_t lp = time(0);
-	
-	/* update the values so they can be written to the database. */
-	item->play_count ++;
-	item->last_played = 0.0 + lp;
-	
-	query = sqlite3_mprintf("UPDATE video_files "
-													"SET playcount = %d, lastplayed = %d "
-													"WHERE path = '%q' ",
-													item->play_count, lp, item->path);
+	char buf[8192];
+
+	/* update the values so they can be written to the database. */	
+	query = sqlite3_mprintf(
+													"INSERT INTO PlayHistory "
+													" ( path, playedDate ) "
+													" VALUES ( '%q', ",
+													item->path);
+	snprintf(buf, sizeof(buf), "%s %ld)", query, lp);
 	printf ("%s;%s;%s\n", query, item->path, item->name);
 	
-	result = sqlite3_exec(db->db, query, NULL, NULL, &error_msg);
+	result = sqlite3_exec(db->db, buf, NULL, NULL, &error_msg);
 	if (SQLITE_OK != result)
 		{
 			fprintf(stderr, "db: update error:\"%s\"; %s\n", query, error_msg);
@@ -416,27 +468,39 @@ void database_video_file_update(Database* db, Volume_Item* item)
  */
 static void* _video_files_next(DBIterator* it)
 {
-#define COL_PATH       0
-#define COL_TITLE      1
-#define COL_GENRE      2
-#define COL_FTYPE      3
-#define COL_PLAYCOUNT  4
-#define COL_LENGTH     5
-#define COL_LASTPLAYED 6
+#define COL_ID         0
+#define COL_PATH       1
+#define COL_TITLE      2
+#define COL_GENRE      3
+#define COL_FTYPE      4
+#define COL_PLAYCOUNT  5
+#define COL_LENGTH     6
+#define COL_LASTPLAYED 7
 
 	Volume_Item* item;
-
+	long long id ;
 	/*
 	printf("%dx%d\n", it->rows, it->cols);
 	printf ("%s;%s;%s\n", it->tbl_results[it->pos + COL_PATH], it->tbl_results[it->pos + COL_TITLE],
 					it->tbl_results[it->pos + COL_GENRE]);
 	*/
-	item = volume_item_new(it->tbl_results[it->pos + COL_PATH], it->tbl_results[it->pos + COL_TITLE],
-												 it->tbl_results[it->pos +COL_GENRE], it->tbl_results[it->pos + COL_FTYPE]);
 	
-	item->play_count = atoi(it->tbl_results[it->pos+COL_PLAYCOUNT]);
+	if (it->tbl_results[it->pos + COL_ID]) { id = atoi(it->tbl_results[it->pos + COL_ID]); }
+
+	item = volume_item_new(id,
+												 it->tbl_results[it->pos + COL_PATH], 
+												 it->tbl_results[it->pos + COL_TITLE],
+												 it->tbl_results[it->pos +COL_GENRE], 
+												 it->tbl_results[it->pos + COL_FTYPE]);
+	if (it->tbl_results[it->pos + COL_PLAYCOUNT])
+		{ item->play_count = atoi(it->tbl_results[it->pos+COL_PLAYCOUNT]); }
+	else { item->play_count = 0; }
+	
 	item->length = atoi(it->tbl_results[it->pos+COL_LENGTH]);
-	item->last_played = atoi(it->tbl_results[it->pos+COL_LASTPLAYED]);
+	
+	if (it->tbl_results[it->pos + COL_LASTPLAYED])
+		{ item->last_played = atoi(it->tbl_results[it->pos+COL_LASTPLAYED]); }
+	else { item->play_count = 0; }
 	
 	return item;
 }

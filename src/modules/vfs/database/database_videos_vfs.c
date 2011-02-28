@@ -270,6 +270,33 @@ static Eina_List* _vfs_db_videos_recents_get(int count)
 	return recents;
 }
 
+static Eina_List* _vfs_db_videos_news_get(int count)
+{
+	Eina_List* news = NULL;
+	Database* db;
+	DBIterator* it;
+	
+	db = database_new();
+	it = database_video_news_get(db);
+	{
+		Vfs_Item* vli;
+		Volume_Item* vi;
+		
+		while (vi = (Volume_Item*)database_iterator_next(it))
+			{
+				vli = vfs_item_new_withvolume(vi);
+				
+				news = eina_list_append(news, vli);
+			}
+	}
+	
+	database_iterator_free(it);
+	database_free(db);
+	
+	return news;
+}
+
+
 /**
  *  @param count  number of favorites to get.
  */

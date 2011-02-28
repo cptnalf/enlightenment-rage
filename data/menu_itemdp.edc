@@ -1,0 +1,208 @@
+group {
+ name: "menu_itemdp";
+ min: 1000 40; // size hints for the ui
+	parts {
+		part {
+		name: "_bg0";
+		mouse_events: 0;
+			description {
+			state: "default" 0.0;
+				image {
+				normal: "mitem2-dp.png";
+				border: 18 18 18 18;
+				}
+				rel1 {
+				to: "_bg";
+				}
+				rel2 {
+				to: "_bg";
+				}
+			color: 255 255 255 0;
+			}
+			description {
+			state: "active" 0.0;
+			inherit: "default" 0.0;
+			color: 255 255 255 255;
+			}
+		}
+		
+		part {
+		name: "_bg";
+		mouse_events: 0;
+			description {
+			state: "default" 0.0;
+				image {
+				normal: "mitem-dp.png";
+				border: 18 18 18 18;
+				}
+				rel1 {
+				relative: 0.0 0.0;
+				offset:  -6 -6;
+				}
+				rel2 {
+				relative: 1.0 1.0;
+				offset:  6 6;
+				}
+			}
+			description {
+			state: "active" 0.0;
+			inherit: "default" 0.0;
+				rel1 {
+				relative: 0.0 0.0;
+				offset:  -6 -6;
+				}
+				rel2 {
+				relative: 1.0 1.0;
+				offset:  6 6;
+				}
+			}
+		}
+		
+		part {
+		name: "label";
+		type: TEXT;
+		effect: SOFT_OUTLINE;
+			description {
+			state: "default" 0.0;
+			align: 0.0 0.5;
+				rel1 {
+				to_x: "_item";
+				to_y: "_bg";
+				relative: 1.0 0.125;
+				offset:  20 0;
+				}
+				rel2 {
+				to_y: "_bg";
+				to_x: "info";
+				relative: 0.0 0.875;
+				offset:  -1 0;
+				}
+				text {
+				text: "XXX";
+				font: "Sans";
+					//:style=Bold";
+				fit: 0 1;
+					//		  size: 24;
+					//		  min: 1 1;
+				align: 0.0 0.5;
+				}
+			color: 235 245 255 120;
+			color2: 180 200 220 80;
+			}
+			
+			description {
+			state: "active" 0.0;
+			inherit: "default" 0.0;
+			color: 255 255 255 255;
+			color2: 220 230 240 240;
+			}
+		}
+		
+		part {
+		name: "info";
+		type: TEXT;
+		effect: SOFT_OUTLINE;
+			description {
+			state: "default" 0.0;
+			align: 1.0 0.5;
+				rel1 {
+				to: "_bg";
+				relative: 1.0 0.0;
+				offset:  -1 1;
+				}
+				rel2 {
+				to: "_bg";
+				relative: 1.0 1.0;
+				offset:  -1 -1;
+				}
+				text {
+				text: "XXX";
+				font: "Sans";
+					//:style=Bold";
+				fit: 0 1;
+					//		  size: 24;
+				min: 1 0;
+				align: 0.0 0.5;
+				}
+			color: 235 245 255 120;
+			color2: 180 200 220 80;
+			}
+		}
+		
+		part {
+		name: "_item";
+		type: RECT;
+		mouse_events: 0;
+			description {
+			state: "default" 0.0;
+			align: 0.0 0.5;
+			aspect: 1.333333 1.333333;
+			visible: 0;
+				rel1 {
+				to: "_bg";
+				relative: 0.0 0.0;
+				offset:  15 15;
+				}
+				rel2 {
+				to: "_bg";
+				relative: 0.0 0.9;
+					//offset:  15 -16;
+				}
+			}
+		}
+		part {
+		name: "item";
+		type: SWALLOW;
+		mouse_events: 0;
+			description {
+			state: "default" 0.0;
+			align: 0.5 0.5;
+			aspect: 1.333333 1.333333;
+				rel1 {
+				to: "_item";
+				}
+				rel2 {
+				to: "_item";
+				}
+			}
+			description {
+			state: "active" 0.0;
+			inherit: "default" 0.0;
+			align: 0.5 0.5;
+				rel1 {
+				relative: -0.1 -0.1;
+					//relative: -0.5 -0.2;
+				}
+				rel2 {
+				relative: 1.1 1.0;
+					//relative: 1.5 1.2;
+				}
+			}
+		}
+	}
+	
+	programs {
+		program {
+		name: "go";
+		signal: "select";
+		source: "on";
+		action: STATE_SET "active" 0.0;
+		transition: DECELERATE 0.2;
+		target:  "_bg";
+		target:  "_bg0";
+		target:  "label";
+		target:  "item";
+		}
+		program {
+		name: "stop";
+		signal: "select";
+		source: "off";
+		action: STATE_SET "default" 0.0;
+		transition: DECELERATE 0.5;
+		target:  "_bg";
+		target:  "_bg0";
+		target:  "label";
+		target:  "item";
+		}
+	}
+}

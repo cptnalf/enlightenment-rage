@@ -6,6 +6,7 @@ typedef struct _Volume_Item Volume_Item;
 
 struct _Volume_Item
 {
+	long long id;
    char       *path;
    char       *rpath;
    char       *name;
@@ -31,7 +32,7 @@ void volume_deindex(char *vol);
 int  volume_type_num_get(char *type);
 const Eina_List *volume_items_get(void);
 
-Volume_Item* volume_item_new(const char* path, const char* name, const char* genre, const char* type);
+Volume_Item* volume_item_new(const long long id, const char* path, const char* name, const char* genre, const char* type);
 Volume_Item* volume_item_copy(Volume_Item* item);
 void volume_item_free(Volume_Item* item);
     
