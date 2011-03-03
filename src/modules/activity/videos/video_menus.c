@@ -193,6 +193,30 @@ video_menu_recents(void* data)
 	if (sel) { menu_item_select(sel); }
 }
 
+static void video_menu_news(void* data)
+{
+	Vfs_Item* vl;
+	Vfs_Item* vi;
+	const char* sel = NULL;
+	
+	vi = data;
+	vl = (Vfs_Item*)menu_data_get();
+	
+	if (!vl)
+		{
+			vl = vfs_item_new("Newly Added Items", "", 0);
+			menu_push("menu", vl->label, vfs_item_free, vl);
+		}
+	
+	{
+		Eina_List* news = vfs_source->get_news(50);
+		sel = _menu_add_list(news, vl->label);
+	}
+	
+	menu_go();
+	if (sel) { menu_item_select(sel); }
+}
+
 static void
 video_menu_library(void *data)
 {
@@ -276,11 +300,16 @@ main_menu_video(void *data)
 								video_menu_favorites, NULL, NULL, NULL, NULL);
 	menu_item_enabled_set("Video", "Favorites", 1);
 
-	menu_item_add("icon/history_folder", "Recents",
+	menu_item_add("icon/recent_folder", "Recents",
 								"files recently played", NULL,
 								video_menu_recents, NULL, NULL, NULL, NULL);
 	menu_item_enabled_set("Video", "Recents", 1);
 	
+	menu_item_add("icon/new_folder", "Newly Added",
+								"Newly Added Files", NULL,
+								video_menu_news, NULL, NULL, NULL, NULL);
+	menu_item_enabled_set("Video", "Newly Added", 1);
+
 	menu_item_add("icon/library", "anime",
 								"japanese animated shows/movies", NULL,
 								video_menu_anime_library, NULL, NULL, NULL, NULL);

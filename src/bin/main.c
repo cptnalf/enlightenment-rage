@@ -193,7 +193,7 @@ main(int argc, char **argv)
 	menu_item_add("icon/tv", "TV",
 								"Scan all media again and update", NULL,
 								main_menu_tv, NULL, NULL, NULL, NULL);
-	menu_item_add("icon/video_file", "Videos",
+	menu_item_add("icon/video", "Videos",
 								"Films, Movies and other video footage", NULL,
 								main_menu_video, NULL, NULL, NULL, NULL);
 	menu_item_add("icon/dvd", "DVD",

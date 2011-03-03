@@ -250,7 +250,7 @@ static Eina_List* _vfs_db_videos_recents_get(int count)
 	DBIterator* it;
 	
 	db = database_new();
-	it = database_video_recents_get(db);
+	it = database_video_recents_get(db, count);
 	
 	{
 		Vfs_Item* vli;
@@ -277,7 +277,7 @@ static Eina_List* _vfs_db_videos_news_get(int count)
 	DBIterator* it;
 	
 	db = database_new();
-	it = database_video_news_get(db);
+	it = database_video_news_get(db, count);
 	{
 		Vfs_Item* vli;
 		Volume_Item* vi;
@@ -308,7 +308,7 @@ _vfs_db_videos_favorites_get(int count)
 	DBIterator* it;
 	
 	db = database_new();
-	it = database_video_favorites_get(db);
+	it = database_video_favorites_get(db, count);
 	
 	{
 		Vfs_Item* vli;
@@ -328,6 +328,34 @@ _vfs_db_videos_favorites_get(int count)
 	database_free(db);
 	
 	return favorites;
+}
+
+static Eina_List* _vfs_db_vide_news_get(int count)
+{
+	Eina_List* news = NULL;
+	Database* db;
+	DBIterator* it;
+	
+	db = database_new();
+	it = database_video_news_get(db, count);
+	{
+		Vfs_Item* vli;
+		Volume_Item* vi;
+		
+		/* the next fx gives me a pointer... */
+		while (vi = (Volume_Item*)database_iterator_next(it))
+			{
+				/* construct the video lib item from the volume item. */			
+				vli = vfs_item_new_withvolume(vi);
+				
+				news = eina_list_append(news, vli);
+			}
+	}
+	
+	database_iterator_free(it);
+	database_free(db);
+	
+	return news;
 }
 
 static void _vfs_db_videos_record_play(Vfs_Item* item)
@@ -351,6 +379,7 @@ Vfs_Source DatabaseVideoVfs =
 		_vfs_db_videos_get,
 		_vfs_db_videos_recents_get,
 		_vfs_db_videos_favorites_get,
+		_vfs_db_videos_news_get,
 		_vfs_db_videos_record_play,
 	};
 

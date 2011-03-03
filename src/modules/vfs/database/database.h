@@ -51,8 +51,8 @@ extern DBIterator* database_video_files_genre_search(Database* db, const char* g
 extern DBIterator* database_video_files_path_search(Database* db, const char* path);
 extern void database_video_file_del(Database* db, const char* path);
 extern void database_video_file_add(Database* db, const Volume_Item* item);
-extern DBIterator* database_video_favorites_get(Database* db);
-extern DBIterator* database_video_recents_get(Database* db);
-extern DBIterator* database_video_news_get(Database* db);
+extern DBIterator* database_video_favorites_get(Database* db, int count);
+extern DBIterator* database_video_recents_get(Database* db, int count);
+extern DBIterator* database_video_news_get(Database* db, int count);
 
 #endif

@@ -827,23 +827,40 @@ collections {
 	}
 	
 #define ICON(n, i) images {image: i LOSSY 96;} group { name: n; parts { part { name: "_"; mouse_events: 0; description { state: "default" 0.0; aspect: 1.0 1.0; image { normal: i; } } } } } 
-   ICON("icon/config", "config.png");
-   ICON("icon/video", "video.png"); 
-   ICON("icon/dvd", "dvd.png");
-   ICON("icon/audio", "audio.png");
-   ICON("icon/photo", "photo.png");
-   ICON("icon/update", "update.png");
-   ICON("icon/book", "book.png");
+//   ICON("icon/config", "config.png");
+//   ICON("icon/video", "video.png"); 
+//   ICON("icon/dvd", "dvd.png");
+//   ICON("icon/audio", "audio.png");
+//   ICON("icon/photo", "photo.png");
+//   ICON("icon/update", "update.png");
+//   ICON("icon/book", "book.png");
 //   ICON("icon/favorites", "favorites.png");
-   ICON("icon/resume", "resume.png");
-   ICON("icon/bug", "bug.png");
-   ICON("icon/genre", "genre.png");
+//   ICON("icon/resume", "resume.png");
+//   ICON("icon/bug", "bug.png");
+//   ICON("icon/genre", "genre.png");
    //   ICON("icon/videos", "videos.png");
 
 
-   ICON("icon/favorites", "folder_favorites.png");
-   ICON("icon/video_file", "video_file.png");
-   ICON("icon/video_folder", "video_folder.png");
-   ICON("icon/history_folder", "history_folder.png");
-   ICON("icon/library", "library.png");
+//   ICON("icon/favorites", "folder_favorites.png");
+//   ICON("icon/video_file", "video_file.png");
+//   ICON("icon/video_folder", "video_folder.png");
+//   ICON("icon/history_folder", "history_folder.png");
+//   ICON("icon/library", "library.png");
+		 
+		 ICON("icon/config", "pastels/settings-icon.png");
+		 ICON("icon/video",  "pastels/video-icon.png");
+		 ICON("icon/dvd",    "pastels/cd-icon.png");
+		 ICON("icon/audio",  "pastels/speaker-icon.png");
+		 ICON("icon/photo",  "pastels/pictures-icon.png");
+		 ICON("icon/update", "pastels/run-icon.png");
+		 ICON("icon/book",   "book.png");
+		 ICON("icon/favorites", "pastels/folder-favorites-icon.png");
+		 ICON("icon/resume", "resume.png");
+		 ICON("icon/bug",    "bug.png");
+		 ICON("icon/genre",  "genre.png");
+		 ICON("icon/video_file", "pastels/video-clip-icon.png");
+		 ICON("icon/video_folder", "pastels/folder-video-icon.png");
+		 ICON("icon/recent_folder", "pastels/recent-documents-icon.png");
+		 ICON("icon/library",       "pastels/external-drive-icon.png");
+		 ICON("icon/new_folder",    "pastels/folder-open-icon.png");
 }

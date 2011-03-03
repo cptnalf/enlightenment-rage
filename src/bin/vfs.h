@@ -54,6 +54,7 @@ struct _Vfs_Source
 	Eina_List* (*get_items)(Vfs_Item* item);
 	Eina_List* (*get_recents)(int count);
 	Eina_List* (*get_favorites)(int count);
+	Eina_List* (*get_news)(int count);
 	void (*record_play)(Vfs_Item* item);
 };
 

@@ -256,26 +256,30 @@ DBIterator* database_video_files_genre_search(Database* db, const char* genre)
  *
  *  @return an iterator or null if no files have been played.
  */
-DBIterator* database_video_favorites_get(Database* db)
+DBIterator* database_video_favorites_get(Database* db, int count)
 {
 	char* error_msg;
 	int result;
 	int rows, cols;
 	char** tbl_results=0;
 	DBIterator* it = 0;
+	char buf[512];
 	
-	const char* query = 
-		"SELECT v.id, v.path, v.title, v.genre, v.f_type, "
-		" COUNT(ph.playedDate) AS playCount, v.length, "
-		" MAX(ph.playedDate) AS lastPlayed "
-		"FROM video_files AS v "
-		"JOIN PlayHistory AS ph ON ph.path = v.path "
-		"WHERE v.f_type = 'video' "
-		"GROUP BY v.path "
-		"ORDER BY playCount DESC, lastPlayed DESC, v.title, v.path "
-		" LIMIT 50 " ;
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf),
+					 "SELECT v.id, v.path, v.title, v.genre, v.f_type, "
+					 " COUNT(ph.playedDate) AS playCount, v.length, "
+					 " MAX(ph.playedDate) AS lastPlayed "
+					 "FROM video_files AS v "
+					 "JOIN PlayHistory AS ph ON ph.path = v.path "
+					 "WHERE v.f_type = 'video' "
+					 "GROUP BY v.path "
+					 "ORDER BY playCount DESC, lastPlayed DESC, v.title, v.path "
+					 " LIMIT %d ",
+					 count);
 	
-	result = sqlite3_get_table(db->db, query, &tbl_results, &rows, &cols, &error_msg);
+	result = sqlite3_get_table(db->db, buf,
+														 &tbl_results, &rows, &cols, &error_msg);
 	if (SQLITE_OK == result)
 		{
 			it =_database_iterator_new(_video_files_next, 0, /* no extra data to free. */
@@ -295,20 +299,25 @@ DBIterator* database_video_favorites_get(Database* db)
  *
  *  @return an iterator.
  */
-DBIterator* database_video_recents_get(Database* db)
+DBIterator* database_video_recents_get(Database* db, int count)
 {
-	const char* orderby_clause = 
-		"ORDER BY lastPlayed DESC, v.title, v.path "
-		" LIMIT 50";
-	return database_video_files_get(db, " v.f_type = 'video' " , orderby_clause);
+	char buf[128];
+	snprintf(buf, sizeof(buf),  
+					 "ORDER BY lastPlayed DESC, v.title, v.path LIMIT %d",
+					 count);
+	
+	return database_video_files_get(db, " v.f_type = 'video' " , buf);
 }
 
-DBIterator* database_video_news_get(Database* db)
+DBIterator* database_video_news_get(Database* db, int count)
 {
-	const char* orderby_clause = 
-		"ORDER BY v.createdDate DESC, v.title, v.path "
-		" LIMIT 50";
-	return database_video_files_get(db, " v.f_type = 'video' " , orderby_clause);
+	char buf[128];
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), 
+					 "ORDER BY v.createdDate DESC, v.title, v.path LIMIT %d",
+					 count);
+	
+	return database_video_files_get(db, " v.f_type = 'video' " , buf);
 }
 
 static void* _genre_next(DBIterator* it)
