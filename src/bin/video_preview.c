@@ -19,10 +19,17 @@ void video_preview_set(const Volume_Item* vi)
 	
 	if (vi && vi->name)
 		{
-			edje_object_part_text_set(_video_preview, "info", vi->name);
+			edje_object_part_text_set(_video_preview, "preview.info", vi->name);
 		}
-	else { edje_object_part_text_set(_video_preview, "info", ""); }
-	
+	else { edje_object_part_text_set(_video_preview, "preview.info", ""); }
+	/*
+	//if (vi)
+		{
+			edje_object_part_text_set(_video_preview, "preview.desc", 
+																"Rodney finally invites Jennifer on a date; to attend a science conference with him. But petty jealousies arise at the conference that have to be suppressed when a proposed solution for global warming has potentially lethal side effects.");
+		}
+	*/
+
 	if (_mini) { evas_object_del(_mini); _mini = NULL; }
 	
 	_mini = mini_add(_video_preview, vi->path);

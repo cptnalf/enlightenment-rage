@@ -6,6 +6,7 @@ images {
  image: "videos.png" COMP;
  image: "audios.png" COMP;
  image: "photos.png" COMP;
+ image: "shad_square.png" COMP;
 }
 
 collections {
@@ -570,12 +571,12 @@ collections {
 				align: 0.5 0.5;
 				min: 0 100;
 				  rel1 {
-					relative: 0.4 0.05;
-					offset: 50 0;
+							 relative: 0.4 0.05;
+							 offset: 0 0;
 					}
 					rel2 {
-					relative: 0.95 0.95;
-					offset: 0 0;
+							 relative: 1.0 0.95;
+							 offset: 0 0;
 					}
 				}
 			}
@@ -585,16 +586,15 @@ collections {
 	    type: SWALLOW;
 			  description {
 				state: "default" 0.0;
-				align: 1.0 0.0;
-				min: 0 100;
+				align: 0.0 0.0;
 				visible: 1;
 				  rel1 {
-					relative: 0.0 0.25;
-					offset: 50 0;
+					relative: 0.0 0.05;
+					offset: 65 0;
 					}
 					rel2 {
-					relative: 0.3 0.75;
-					offset: 0 -8;
+					relative: 0.4 0.95;
+					offset: 0 0;
 					}
 				}
 			}
