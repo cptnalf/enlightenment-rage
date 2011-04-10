@@ -9,7 +9,7 @@
 #include "e.h"
 #include "volume.h"
 
-void video_preview_set(const Volume_Item* vi);
+void video_preview_set(Volume_Item* vi);
 void video_preview_activate();
 void video_preview_deactivate();
 void video_preview_destroy();

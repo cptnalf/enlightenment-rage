@@ -83,9 +83,10 @@ volume_item_free(Volume_Item* item)
 		{
 			free(item->path);
 			free(item->rpath);
-			free(item->name);
-			eina_stringshare_del(item->genre);
 			
+			if (item->name) { free(item->name); }
+			
+			if (item->genre) { eina_stringshare_del(item->genre); }
 			if (item->type) { eina_stringshare_del(item->type); }
 			
 			if (item->artist) { eina_stringshare_del(item->artist); }

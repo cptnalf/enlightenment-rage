@@ -33,6 +33,46 @@ static void video_obj_button_cb(void *data, Evas_Object *obj, void *event_info);
 static void video_stopped_job_cb(void *data);
 
 /***/
+static void _video_length_update(Evas_Object* obj)
+{
+	double pos, len;
+	char buf[256];
+	int ph, pm, ps, pf, lh, lm, ls;
+	time_t now;
+	struct tm* time_info;
+	
+	now = time(NULL);
+	time_info = localtime(&now);
+	
+	pos = emotion_object_position_get(obj);
+	len = emotion_object_play_length_get(obj);
+	lh = len / 3600;
+	lm = len / 60 - (lh * 60);
+	ls = len - ((lh * 3600) + (lm * 60));
+	ph = pos / 3600;
+	pm = pos / 60 - (ph * 60);
+	ps = pos - ((ph * 3600) + (pm * 60));
+	pf = pos * 100 - (ps * 100) - (pm * 60 * 100) - (ph * 60 * 60 * 100);
+	snprintf(buf, sizeof(buf), "%i:%02i:%02i.%02i / %i:%02i:%02i",
+					 ph, pm, ps, pf, lh, lm, ls);
+	//	printf("%s\n", buf);
+	edje_object_part_text_set(o_video_bg, "position", buf);
+	
+	time_info->tm_min += lm;
+	time_info->tm_hour += lh;	
+	if (time_info->tm_min > 59)
+		{
+			int hrs = time_info->tm_min / 60;
+			time_info->tm_min -= hrs * 60;
+			time_info->tm_hour += hrs;
+		}
+
+	snprintf(buf, sizeof(buf), "%02i:%02i", 
+					 (time_info->tm_hour % 24),
+					 time_info->tm_min);
+	edje_object_part_text_set(o_video_bg, "endTime", buf);
+}
+
 static Eina_Bool
 video_menu_bg_hide_tmer_cb(void *data)
 {
@@ -102,23 +142,7 @@ video_resize(void)
 static void
 video_obj_frame_decode_cb(void *data, Evas_Object *obj, void *event_info)
 {
-	double pos, len;
-	char buf[256];
-	int ph, pm, ps, pf, lh, lm, ls;
-
-	pos = emotion_object_position_get(obj);
-	len = emotion_object_play_length_get(obj);
-	lh = len / 3600;
-	lm = len / 60 - (lh * 60);
-	ls = len - ((lh * 3600) + (lm * 60));
-	ph = pos / 3600;
-	pm = pos / 60 - (ph * 60);
-	ps = pos - ((ph * 3600) + (pm * 60));
-	pf = pos * 100 - (ps * 100) - (pm * 60 * 100) - (ph * 60 * 60 * 100);
-	snprintf(buf, sizeof(buf), "%i:%02i:%02i.%02i / %i:%02i:%02i",
-					 ph, pm, ps, pf, lh, lm, ls);
-	//	printf("%s\n", buf);
-	edje_object_part_text_set(o_video_bg, "position", buf);
+	_video_length_update(obj);
 }
 
 static void
@@ -130,22 +154,7 @@ video_obj_frame_resize_cb(void *data, Evas_Object *obj, void *event_info)
 static void
 video_obj_length_change_cb(void *data, Evas_Object *obj, void *event_info)
 {
-	double pos, len;
-	char buf[256];
-	int ph, pm, ps, pf, lh, lm, ls;
-
-	pos = emotion_object_position_get(obj);
-	len = emotion_object_play_length_get(obj);
-	lh = len / 3600;
-	lm = len / 60 - (lh * 60);
-	ls = len - (lm * 60);
-	ph = pos / 3600;
-	pm = pos / 60 - (ph * 60);
-	ps = pos - (pm * 60);
-	pf = pos * 100 - (ps * 100) - (pm * 60 * 100) - (ph * 60 * 60 * 100);
-	snprintf(buf, sizeof(buf), "%i:%02i:%02i.%02i / %i:%02i:%02i",
-					 ph, pm, ps, pf, lh, lm, ls);
-	edje_object_part_text_set(o_video_bg, "position", buf);
+	_video_length_update(obj);
 	edje_object_signal_emit(o_video_bg, "active", "");
 }
 

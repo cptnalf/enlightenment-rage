@@ -4,11 +4,12 @@
  */
 
 #include "main.h"
+#include "metadata.h"
 
 static Evas_Object* _video_preview = NULL;
 static Evas_Object* _mini = NULL;
 
-void video_preview_set(const Volume_Item* vi)
+void video_preview_set(Volume_Item* vi)
 {
 	if (! _video_preview)
 		{
@@ -17,19 +18,42 @@ void video_preview_set(const Volume_Item* vi)
 			edje_object_file_set(_video_preview, theme, "mini_preview");
 		}
 	
-	if (vi && vi->name)
+	/* blank it out. */
+	edje_object_part_text_set(_video_preview, "preview.desc", "");
+	if (vi)
 		{
-			edje_object_part_text_set(_video_preview, "preview.info", vi->name);
+			Metadata* ep = metadata_get(vi);
+			Eina_Bool name_set;
+			char buf[100];
+			
+			if (ep)
+				{ 
+					if (ep->synopsis) 
+						{ edje_object_part_text_set(_video_preview, "preview.desc", ep->synopsis); }
+					if (ep->show || ep->title)
+						{
+							name_set = EINA_TRUE;
+							snprintf(buf, sizeof(buf), "%s s%02de%02d - %s", 
+											 (ep->show ? ep->show : "?"),
+											 ep->season, ep->episode,
+											 (ep->title ? ep->title : "?"));
+							
+							edje_object_part_text_set(_video_preview, "preview.info", buf);
+						}
+					
+					metadata_free(ep);
+				}
+			
+			if (!name_set)
+				{
+					if (vi->name)
+						{
+							edje_object_part_text_set(_video_preview, "preview.info", vi->name);
+						}
+					else { edje_object_part_text_set(_video_preview, "preview.info", ""); }
+				}
 		}
-	else { edje_object_part_text_set(_video_preview, "preview.info", ""); }
-	/*
-	//if (vi)
-		{
-			edje_object_part_text_set(_video_preview, "preview.desc", 
-																"Rodney finally invites Jennifer on a date; to attend a science conference with him. But petty jealousies arise at the conference that have to be suppressed when a proposed solution for global warming has potentially lethal side effects.");
-		}
-	*/
-
+	
 	if (_mini) { evas_object_del(_mini); _mini = NULL; }
 	
 	_mini = mini_add(_video_preview, vi->path);

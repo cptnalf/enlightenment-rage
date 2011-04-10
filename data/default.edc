@@ -238,6 +238,41 @@ collections {
 						}
 					}
 				}
+				part { 
+				  name: "endTime";
+					type: TEXT;
+					effect: SOFT_OUTLINE;
+					clip_to: "clip";
+					description {
+						state: "deault" 0.0;
+						align: 1.0 1.0;
+						visible: 0;
+						rel1 {
+						  relative: 0.0 1.0;
+							offset: 45 -70;
+						}
+						rel2 {
+						  relative: 1.0 1.0;
+							offset: 0 0;
+						}
+						color: 255 255 255 0;
+						color2: 0 0 0 0;
+						text {
+						  text: "00:00";
+							font: "Sans";
+							size: 30;
+							min: 1 1;
+							align: 0.5 0.5;
+						}
+					}
+					description {
+					  state: "active" 0.0;
+						inherit: "default" 0.0;
+						visible: 1;
+						color: 255 255 255 255;
+						color2: 0 0 0 255;
+					}
+				}
 				part {
 				  name: "position";
 				  type: TEXT;
@@ -316,6 +351,7 @@ collections {
 				  source:  "";
 				  action:  STATE_SET "active" 0.0;
 				  target:  "position";
+					target:  "endTime";
 				  after:   "go_passive";
 				}
 				program {

@@ -49,7 +49,9 @@ module.h \
 input.h \
 input.c \
 gen_thumb.c \
-gen_thumb.h
+gen_thumb.h \
+metadata.c \
+metadata.h
 
 include $(top_srcdir)/src/modules/input/files.mak
 include $(top_srcdir)/src/modules/activity/audio/files.mak
